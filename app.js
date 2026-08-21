@@ -67,7 +67,60 @@ async function searchCard() {
         console.error(error);
     }
 }
+function displaySearchResults(data) {
 
+    const results =
+        document.getElementById("searchResults");
+
+    results.innerHTML = "";
+
+    if (!data.data || data.data.length === 0) {
+
+        results.innerHTML =
+            "<p>No cards found.</p>";
+
+        return;
+    }
+
+    data.data.forEach(card => {
+
+        const image =
+            card.image_uris?.normal ||
+            card.card_faces?.[0]?.image_uris?.normal;
+
+        if (!image) {
+            return;
+        }
+
+        const element =
+            document.createElement("div");
+
+        element.className = "card";
+
+        element.innerHTML = `
+            <img
+                src="${image}"
+                alt="${card.name}"
+            >
+
+            <h3>${card.name}</h3>
+
+            <button>
+                Add to Collection
+            </button>
+        `;
+
+        element
+            .querySelector("button")
+            .addEventListener(
+                "click",
+                () => addToCollection(card)
+            );
+
+        results.appendChild(element);
+
+    });
+}
 // ===============================
 // DISPLAY SEARCH RESULT
 // ===============================
