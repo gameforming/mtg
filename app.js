@@ -39,33 +39,34 @@ async function searchCard() {
         return;
     }
 
-    const results = document.getElementById("searchResults");
+    const results =
+        document.getElementById("searchResults");
 
     results.innerHTML = "Searching...";
 
     try {
 
         const response = await fetch(
-            `https://api.scryfall.com/cards/named?exact=${encodeURIComponent(input)}`
+            `https://api.scryfall.com/cards/search?q=${encodeURIComponent(input)}`
         );
 
         if (!response.ok) {
-            throw new Error("Card not found");
+            throw new Error("Search failed");
         }
 
-        const card = await response.json();
+        const data = await response.json();
 
-        displaySearchCard(card);
+        displaySearchResults(data);
 
     } catch (error) {
 
         results.innerHTML = `
-            <p>Card not found.</p>
+            <p>No cards found.</p>
         `;
 
+        console.error(error);
     }
 }
-
 
 // ===============================
 // DISPLAY SEARCH RESULT
