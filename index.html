@@ -1,65 +1,155 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
     <title>MTG Game</title>
 
-    <link rel="stylesheet" href="style.css">
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
+
 </head>
 
 <body>
 
-    <header>
-        <h1>MTG Game</h1>
+<header>
 
-        <nav>
-            <button onclick="showPage('searchPage')">Search Cards</button>
-            <button onclick="showPage('collectionPage')">Collection</button>
-        </nav>
-    </header>
+    <h1>MTG Game</h1>
 
+    <nav>
 
-    <main>
+        <button onclick="showPage('searchPage')">
+            Search
+        </button>
 
-        <!-- SEARCH -->
+        <button onclick="showPage('collectionPage')">
+            Collection
+        </button>
 
-        <section id="searchPage">
+        <button onclick="showPage('decksPage')">
+            Decks
+        </button>
 
-            <h2>Search Cards</h2>
+    </nav>
 
-            <div class="searchBox">
-                <input
-                    id="searchInput"
-                    type="text"
-                    placeholder="Search for a card..."
-                >
-
-                <button onclick="searchCard()">
-                    Search
-                </button>
-            </div>
-
-            <div id="searchResults"></div>
-
-        </section>
+</header>
 
 
-        <!-- COLLECTION -->
+<main>
 
-        <section id="collectionPage" class="hidden">
+    <!-- ========================= -->
+    <!-- SEARCH -->
+    <!-- ========================= -->
 
-            <h2>My Collection</h2>
+    <section id="searchPage">
 
-            <div id="collection"></div>
+        <h2>Search Cards</h2>
 
-        </section>
+        <div class="searchBox">
 
-    </main>
+            <input
+                id="searchInput"
+                type="text"
+                placeholder="Search cards..."
+                onkeydown="handleSearchKey(event)"
+            >
+
+            <button onclick="searchCards()">
+                Search
+            </button>
+
+        </div>
+
+        <div
+            id="searchResults"
+            class="cardGrid"
+        ></div>
+
+    </section>
 
 
-    <script src="app.js"></script>
+    <!-- ========================= -->
+    <!-- COLLECTION -->
+    <!-- ========================= -->
+
+    <section
+        id="collectionPage"
+        class="hidden"
+    >
+
+        <h2>My Collection</h2>
+
+        <div
+            id="collection"
+            class="cardGrid"
+        ></div>
+
+    </section>
+
+
+    <!-- ========================= -->
+    <!-- DECKS -->
+    <!-- ========================= -->
+
+    <section
+        id="decksPage"
+        class="hidden"
+    >
+
+        <div class="deckHeader">
+
+            <h2>My Decks</h2>
+
+            <button onclick="createDeck()">
+                + Create Deck
+            </button>
+
+        </div>
+
+        <div
+            id="decks"
+            class="deckGrid"
+        ></div>
+
+    </section>
+
+
+    <!-- ========================= -->
+    <!-- DECK VIEW -->
+    <!-- ========================= -->
+
+    <section
+        id="deckViewPage"
+        class="hidden"
+    >
+
+        <button onclick="showPage('decksPage')">
+            ← Back to Decks
+        </button>
+
+        <h2 id="deckViewTitle"></h2>
+
+        <div
+            id="deckViewCards"
+            class="cardGrid"
+        ></div>
+
+    </section>
+
+</main>
+
+
+<script src="app.js"></script>
 
 </body>
+
 </html>
