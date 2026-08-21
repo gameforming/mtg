@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>MTG Game</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <header>
+        <h1>MTG Game</h1>
+
+        <nav>
+            <button onclick="showPage('searchPage')">Search Cards</button>
+            <button onclick="showPage('collectionPage')">Collection</button>
+        </nav>
+    </header>
+
+
+    <main>
+
+        <!-- SEARCH -->
+
+        <section id="searchPage">
+
+            <h2>Search Cards</h2>
+
+            <div class="searchBox">
+                <input
+                    id="searchInput"
+                    type="text"
+                    placeholder="Search for a card..."
+                >
+
+                <button onclick="searchCard()">
+                    Search
+                </button>
+            </div>
+
+            <div id="searchResults"></div>
+
+        </section>
+
+
+        <!-- COLLECTION -->
+
+        <section id="collectionPage" class="hidden">
+
+            <h2>My Collection</h2>
+
+            <div id="collection"></div>
+
+        </section>
+
+    </main>
+
+
+    <script src="app.js"></script>
+
+</body>
+</html>
