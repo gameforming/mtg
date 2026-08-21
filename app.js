@@ -1,21 +1,21 @@
 // ======================================================
+// MTG GAME - APP.JS
+// ======================================================
+
+
+// ======================================================
 // DATA
 // ======================================================
 
 let collection =
-    JSON.parse(
-        localStorage.getItem("mtgCollection")
-    ) || [];
-
+    JSON.parse(localStorage.getItem("mtgCollection")) || [];
 
 let decks =
-    JSON.parse(
-        localStorage.getItem("mtgDecks")
-    ) || [];
+    JSON.parse(localStorage.getItem("mtgDecks")) || [];
 
 
 // ======================================================
-// SAVE DATA
+// STORAGE
 // ======================================================
 
 function saveCollection() {
@@ -24,6 +24,7 @@ function saveCollection() {
         "mtgCollection",
         JSON.stringify(collection)
     );
+
 }
 
 
@@ -33,6 +34,7 @@ function saveDecks() {
         "mtgDecks",
         JSON.stringify(decks)
     );
+
 }
 
 
@@ -43,40 +45,41 @@ function saveDecks() {
 function showPage(pageId) {
 
     const pages = [
-
         "searchPage",
         "collectionPage",
         "decksPage",
         "deckViewPage"
-
     ];
 
     pages.forEach(page => {
 
-        document
-            .getElementById(page)
-            .classList.add("hidden");
+        const element =
+            document.getElementById(page);
+
+        if (element) {
+            element.classList.add("hidden");
+        }
 
     });
 
 
-    document
-        .getElementById(pageId)
-        .classList.remove("hidden");
+    const selectedPage =
+        document.getElementById(pageId);
+
+    if (selectedPage) {
+        selectedPage.classList.remove("hidden");
+    }
 
 
     if (pageId === "collectionPage") {
-
         renderCollection();
-
     }
 
 
     if (pageId === "decksPage") {
-
         renderDecks();
-
     }
+
 }
 
 
@@ -87,10 +90,9 @@ function showPage(pageId) {
 function handleSearchKey(event) {
 
     if (event.key === "Enter") {
-
         searchCards();
-
     }
+
 }
 
 
@@ -104,19 +106,19 @@ async function searchCards() {
 
 
     if (!input) {
-
         return;
-
     }
 
 
     const results =
-        document
-            .getElementById("searchResults");
+        document.getElementById(
+            "searchResults"
+        );
 
 
-    results.innerHTML =
-        "<p>Searching...</p>";
+    results.innerHTML = `
+        <p>Searching...</p>
+    `;
 
 
     try {
@@ -128,11 +130,9 @@ async function searchCards() {
 
 
         if (!response.ok) {
-
             throw new Error(
-                "Search failed"
+                "Scryfall search failed"
             );
-
         }
 
 
@@ -140,7 +140,7 @@ async function searchCards() {
             await response.json();
 
 
-        displaySearchResults(data.data);
+        displaySearchResults(data);
 
 
     } catch (error) {
@@ -148,38 +148,42 @@ async function searchCards() {
         console.error(error);
 
 
-        results.innerHTML =
-            "<p>No cards found.</p>";
+        results.innerHTML = `
+            <p>No cards found.</p>
+        `;
 
     }
+
 }
 
 
 // ======================================================
-// SEARCH RESULTS
+// DISPLAY SEARCH RESULTS
 // ======================================================
 
-function displaySearchResults(cards) {
+function displaySearchResults(data) {
 
     const results =
-        document
-            .getElementById("searchResults");
+        document.getElementById(
+            "searchResults"
+        );
 
 
     results.innerHTML = "";
 
 
-    if (!cards || cards.length === 0) {
+    if (!data.data || data.data.length === 0) {
 
-        results.innerHTML =
-            "<p>No cards found.</p>";
+        results.innerHTML = `
+            <p>No cards found.</p>
+        `;
 
         return;
 
     }
 
 
-    cards.forEach(card => {
+    data.data.forEach(card => {
 
         const image =
             card.image_uris?.normal ||
@@ -187,9 +191,7 @@ function displaySearchResults(cards) {
 
 
         if (!image) {
-
             return;
-
         }
 
 
@@ -197,12 +199,18 @@ function displaySearchResults(cards) {
             document.createElement("div");
 
 
-        element.className =
-            "card";
+        element.className = "card";
 
 
-        let deckOptions =
-            `<option value="">Add to deck...</option>`;
+        // ------------------------------------------
+        // CREATE DECK DROPDOWN
+        // ------------------------------------------
+
+        let deckOptions = `
+            <option value="">
+                Choose a deck...
+            </option>
+        `;
 
 
         decks.forEach(deck => {
@@ -227,29 +235,87 @@ function displaySearchResults(cards) {
                 ${escapeHTML(card.name)}
             </h3>
 
-            <select
-                onchange="addCardToDeck(
-                    '${card.id}',
-                    this.value
-                )"
-            >
+            <select class="deckSelect">
 
                 ${deckOptions}
 
             </select>
 
-            <button
-                onclick='addToCollection(${JSON.stringify(card)})'
-            >
+            <button class="addDeckButton">
+                Add to Deck
+            </button>
+
+            <button class="addCollectionButton">
                 Add to Collection
             </button>
 
         `;
 
 
+        // ------------------------------------------
+        // ADD TO DECK
+        // ------------------------------------------
+
+        const deckButton =
+            element.querySelector(
+                ".addDeckButton"
+            );
+
+
+        deckButton.addEventListener(
+            "click",
+            () => {
+
+                const deckId =
+                    element
+                        .querySelector(".deckSelect")
+                        .value;
+
+
+                if (!deckId) {
+
+                    alert(
+                        "Choose a deck first."
+                    );
+
+                    return;
+
+                }
+
+
+                addCardToDeck(
+                    card,
+                    deckId
+                );
+
+            }
+        );
+
+
+        // ------------------------------------------
+        // ADD TO COLLECTION
+        // ------------------------------------------
+
+        const collectionButton =
+            element.querySelector(
+                ".addCollectionButton"
+            );
+
+
+        collectionButton.addEventListener(
+            "click",
+            () => {
+
+                addToCollection(card);
+
+            }
+        );
+
+
         results.appendChild(element);
 
     });
+
 }
 
 
@@ -291,15 +357,27 @@ function addToCollection(card) {
     saveCollection();
 
 
+    alert(
+        `${card.name} added to your collection.`
+    );
+
+
     renderCollection();
+
 }
 
 
 function renderCollection() {
 
     const container =
-        document
-            .getElementById("collection");
+        document.getElementById(
+            "collection"
+        );
+
+
+    if (!container) {
+        return;
+    }
 
 
     container.innerHTML = "";
@@ -307,8 +385,9 @@ function renderCollection() {
 
     if (collection.length === 0) {
 
-        container.innerHTML =
-            "<p>Your collection is empty.</p>";
+        container.innerHTML = `
+            <p>Your collection is empty.</p>
+        `;
 
         return;
 
@@ -321,8 +400,7 @@ function renderCollection() {
             document.createElement("div");
 
 
-        element.className =
-            "card";
+        element.className = "card";
 
 
         element.innerHTML = `
@@ -337,22 +415,38 @@ function renderCollection() {
             </h3>
 
             <p>
-                Quantity:
-                ${card.amount}
+                Quantity: ${card.amount}
             </p>
 
             <button
-                onclick="removeFromCollection('${card.id}')"
+                class="removeCollectionButton"
             >
-                Remove
+                Remove One
             </button>
 
         `;
 
 
+        element
+            .querySelector(
+                ".removeCollectionButton"
+            )
+            .addEventListener(
+                "click",
+                () => {
+
+                    removeFromCollection(
+                        card.id
+                    );
+
+                }
+            );
+
+
         container.appendChild(element);
 
     });
+
 }
 
 
@@ -365,9 +459,7 @@ function removeFromCollection(id) {
 
 
     if (!card) {
-
         return;
-
     }
 
 
@@ -385,6 +477,7 @@ function removeFromCollection(id) {
 
 
     saveCollection();
+
 
     renderCollection();
 
@@ -404,19 +497,15 @@ function createDeck() {
 
 
     if (!name || !name.trim()) {
-
         return;
-
     }
 
 
     const deck = {
 
-        id:
-            crypto.randomUUID(),
+        id: crypto.randomUUID(),
 
-        name:
-            name.trim(),
+        name: name.trim(),
 
         cards: []
 
@@ -441,8 +530,14 @@ function createDeck() {
 function renderDecks() {
 
     const container =
-        document
-            .getElementById("decks");
+        document.getElementById(
+            "decks"
+        );
+
+
+    if (!container) {
+        return;
+    }
 
 
     container.innerHTML = "";
@@ -467,8 +562,7 @@ function renderDecks() {
             document.createElement("div");
 
 
-        element.className =
-            "deck";
+        element.className = "deck";
 
 
         const cardCount =
@@ -491,21 +585,15 @@ function renderDecks() {
 
             <div class="deckButtons">
 
-                <button
-                    onclick="openDeck('${deck.id}')"
-                >
+                <button class="openButton">
                     Open
                 </button>
 
-                <button
-                    onclick="renameDeck('${deck.id}')"
-                >
+                <button class="renameButton">
                     Rename
                 </button>
 
-                <button
-                    onclick="deleteDeck('${deck.id}')"
-                >
+                <button class="deleteButton">
                     Delete
                 </button>
 
@@ -514,9 +602,52 @@ function renderDecks() {
         `;
 
 
+        // OPEN
+
+        element
+            .querySelector(".openButton")
+            .addEventListener(
+                "click",
+                () => {
+
+                    openDeck(deck.id);
+
+                }
+            );
+
+
+        // RENAME
+
+        element
+            .querySelector(".renameButton")
+            .addEventListener(
+                "click",
+                () => {
+
+                    renameDeck(deck.id);
+
+                }
+            );
+
+
+        // DELETE
+
+        element
+            .querySelector(".deleteButton")
+            .addEventListener(
+                "click",
+                () => {
+
+                    deleteDeck(deck.id);
+
+                }
+            );
+
+
         container.appendChild(element);
 
     });
+
 }
 
 
@@ -524,14 +655,10 @@ function renderDecks() {
 // ADD CARD TO DECK
 // ======================================================
 
-function addCardToDeck(cardId, deckId) {
-
-    if (!deckId) {
-
-        return;
-
-    }
-
+function addCardToDeck(
+    card,
+    deckId
+) {
 
     const deck =
         decks.find(
@@ -541,49 +668,27 @@ function addCardToDeck(cardId, deckId) {
 
     if (!deck) {
 
-        return;
-
-    }
-
-
-    const ownedCard =
-        collection.find(
-            card => card.id === cardId
-        );
-
-
-    if (!ownedCard) {
-
-        alert(
-            "You don't own this card yet!"
+        console.error(
+            "Deck not found:",
+            deckId
         );
 
         return;
 
     }
+
+
+    // IMPORTANT:
+    // We DO NOT check the collection.
+    //
+    // A player can add ANY card from
+    // the search results to ANY deck.
 
 
     const existing =
         deck.cards.find(
-            card => card.id === cardId
+            item => item.id === card.id
         );
-
-
-    const currentAmount =
-        existing
-            ? existing.amount
-            : 0;
-
-
-    if (currentAmount >= ownedCard.amount) {
-
-        alert(
-            "You don't own enough copies of this card."
-        );
-
-        return;
-
-    }
 
 
     if (existing) {
@@ -594,11 +699,13 @@ function addCardToDeck(cardId, deckId) {
 
         deck.cards.push({
 
-            id: ownedCard.id,
+            id: card.id,
 
-            name: ownedCard.name,
+            name: card.name,
 
-            image: ownedCard.image,
+            image:
+                card.image_uris?.normal ||
+                card.card_faces?.[0]?.image_uris?.normal,
 
             amount: 1
 
@@ -611,8 +718,11 @@ function addCardToDeck(cardId, deckId) {
 
 
     alert(
-        `${ownedCard.name} added to ${deck.name}`
+        `${card.name} added to ${deck.name}.`
     );
+
+
+    renderDecks();
 
 }
 
@@ -630,21 +740,21 @@ function openDeck(deckId) {
 
 
     if (!deck) {
-
         return;
-
     }
 
 
     document
-        .getElementById("deckViewTitle")
-        .textContent =
-        deck.name;
+        .getElementById(
+            "deckViewTitle"
+        )
+        .textContent = deck.name;
 
 
     const container =
-        document
-            .getElementById("deckViewCards");
+        document.getElementById(
+            "deckViewCards"
+        );
 
 
     container.innerHTML = "";
@@ -652,8 +762,13 @@ function openDeck(deckId) {
 
     if (deck.cards.length === 0) {
 
-        container.innerHTML =
-            "<p>This deck is empty.</p>";
+        container.innerHTML = `
+            <p>This deck is empty.</p>
+        `;
+
+        showPage("deckViewPage");
+
+        return;
 
     }
 
@@ -664,8 +779,7 @@ function openDeck(deckId) {
             document.createElement("div");
 
 
-        element.className =
-            "card";
+        element.className = "card";
 
 
         element.innerHTML = `
@@ -680,22 +794,31 @@ function openDeck(deckId) {
             </h3>
 
             <p>
-                Quantity:
-                ${card.amount}
+                Quantity: ${card.amount}
             </p>
 
-            <button
-                onclick="
-                    removeCardFromDeck(
-                        '${deck.id}',
-                        '${card.id}'
-                    )
-                "
-            >
-                Remove
+            <button class="removeDeckCardButton">
+                Remove One
             </button>
 
         `;
+
+
+        element
+            .querySelector(
+                ".removeDeckCardButton"
+            )
+            .addEventListener(
+                "click",
+                () => {
+
+                    removeCardFromDeck(
+                        deck.id,
+                        card.id
+                    );
+
+                }
+            );
 
 
         container.appendChild(element);
@@ -724,22 +847,18 @@ function removeCardFromDeck(
 
 
     if (!deck) {
-
         return;
-
     }
 
 
     const card =
         deck.cards.find(
-            card => card.id === cardId
+            item => item.id === cardId
         );
 
 
     if (!card) {
-
         return;
-
     }
 
 
@@ -777,9 +896,7 @@ function renameDeck(deckId) {
 
 
     if (!deck) {
-
         return;
-
     }
 
 
@@ -791,9 +908,7 @@ function renameDeck(deckId) {
 
 
     if (!newName || !newName.trim()) {
-
         return;
-
     }
 
 
@@ -822,9 +937,7 @@ function deleteDeck(deckId) {
 
 
     if (!deck) {
-
         return;
-
     }
 
 
@@ -835,9 +948,7 @@ function deleteDeck(deckId) {
 
 
     if (!confirmed) {
-
         return;
-
     }
 
 
@@ -856,7 +967,7 @@ function deleteDeck(deckId) {
 
 
 // ======================================================
-// HTML ESCAPE
+// HTML SECURITY
 // ======================================================
 
 function escapeHTML(value) {
@@ -864,7 +975,9 @@ function escapeHTML(value) {
     const div =
         document.createElement("div");
 
+
     div.textContent = value;
+
 
     return div.innerHTML;
 
@@ -872,8 +985,9 @@ function escapeHTML(value) {
 
 
 // ======================================================
-// START
+// STARTUP
 // ======================================================
 
 renderCollection();
+
 renderDecks();
