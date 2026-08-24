@@ -71,7 +71,15 @@ function createGameState(
 ) {
 
     return {
+        combat: {
 
+            attackers: [],
+
+            blockers: [],
+
+            damageAssigned: false
+
+        },
         // ==================================================
         // GAME INFORMATION
         // ==================================================
