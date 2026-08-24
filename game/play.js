@@ -22,6 +22,7 @@ function openPlay() {
 
     showPage("playPage");
 
+
     selectedGameMode = null;
 
     selectedDeckId = null;
@@ -52,6 +53,11 @@ function renderGameModes() {
         );
 
 
+    if (!container) {
+        return;
+    }
+
+
     container.innerHTML = "";
 
 
@@ -59,7 +65,9 @@ function renderGameModes() {
         .forEach(mode => {
 
             const element =
-                document.createElement("div");
+                document.createElement(
+                    "div"
+                );
 
 
             element.className =
@@ -97,7 +105,9 @@ function renderGameModes() {
                 );
 
 
-            container.appendChild(element);
+            container.appendChild(
+                element
+            );
 
         });
 
@@ -108,7 +118,9 @@ function renderGameModes() {
 // SELECT GAME MODE
 // ======================================================
 
-function selectGameMode(modeId) {
+function selectGameMode(
+    modeId
+) {
 
     selectedGameMode =
         getGameMode(modeId);
@@ -131,7 +143,7 @@ function selectGameMode(modeId) {
 
 
 // ======================================================
-// SELECTED MODE INFO
+// SELECTED MODE
 // ======================================================
 
 function renderSelectedMode() {
@@ -142,12 +154,19 @@ function renderSelectedMode() {
         );
 
 
+    if (!container) {
+        return;
+    }
+
+
     if (!selectedGameMode) {
 
         container.innerHTML = `
+
             <p>
                 Select a game mode.
             </p>
+
         `;
 
         return;
@@ -234,15 +253,22 @@ function renderDeckSelection() {
         );
 
 
+    if (!container) {
+        return;
+    }
+
+
     container.innerHTML = "";
 
 
     if (!selectedGameMode) {
 
         container.innerHTML = `
+
             <p>
                 Choose a game mode first.
             </p>
+
         `;
 
         return;
@@ -250,16 +276,23 @@ function renderDeckSelection() {
     }
 
 
-    if (decks.length === 0) {
+    if (
+        typeof decks === "undefined" ||
+        decks.length === 0
+    ) {
 
         container.innerHTML = `
+
             <p>
                 You don't have any decks.
             </p>
 
-            <button onclick="showPage('decksPage')">
+            <button
+                onclick="showPage('decksPage')"
+            >
                 Create a Deck
             </button>
+
         `;
 
         return;
@@ -289,7 +322,9 @@ function renderDeckSelection() {
         ({ deck, validation }) => {
 
             const element =
-                document.createElement("div");
+                document.createElement(
+                    "div"
+                );
 
 
             element.className =
@@ -326,7 +361,11 @@ function renderDeckSelection() {
                             </span>
 
                             <button>
-                                Select
+                                ${
+                                    selectedDeckId === deck.id
+                                        ? "Selected"
+                                        : "Select"
+                                }
                             </button>
                         `
 
@@ -336,7 +375,8 @@ function renderDeckSelection() {
                             <span class="invalid">
                                 ✗
                                 ${escapeHTML(
-                                    validation.errors[0]
+                                    validation.errors[0] ||
+                                    "Not suitable"
                                 )}
                             </span>
                         `
@@ -359,6 +399,11 @@ function renderDeckSelection() {
                             selectedDeckId =
                                 deck.id;
 
+
+                            selectedOpponent =
+                                null;
+
+
                             renderDeckSelection();
 
                             renderOpponentSelection();
@@ -369,7 +414,9 @@ function renderDeckSelection() {
             }
 
 
-            container.appendChild(element);
+            container.appendChild(
+                element
+            );
 
         }
     );
@@ -389,6 +436,11 @@ function renderOpponentSelection() {
         );
 
 
+    if (!container) {
+        return;
+    }
+
+
     container.innerHTML = "";
 
 
@@ -398,9 +450,11 @@ function renderOpponentSelection() {
     ) {
 
         container.innerHTML = `
+
             <p>
                 Select a suitable deck first.
             </p>
+
         `;
 
         return;
@@ -413,11 +467,14 @@ function renderOpponentSelection() {
     // ==================================================
 
     if (
+        selectedGameMode.opponents &&
         selectedGameMode.opponents.ai
     ) {
 
         const ai =
-            document.createElement("div");
+            document.createElement(
+                "div"
+            );
 
 
         ai.className =
@@ -453,17 +510,19 @@ function renderOpponentSelection() {
                 "click",
                 () => {
 
-                    selectedOpponent = "ai";
+                    selectedOpponent =
+                        "ai";
+
 
                     renderOpponentSelection();
-
-                    renderStartButton();
 
                 }
             );
 
 
-        container.appendChild(ai);
+        container.appendChild(
+            ai
+        );
 
     }
 
@@ -473,7 +532,9 @@ function renderOpponentSelection() {
     // ==================================================
 
     const multiplayer =
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
 
 
     multiplayer.className =
@@ -519,6 +580,11 @@ function renderStartButton() {
         );
 
 
+    if (!container) {
+        return;
+    }
+
+
     if (
         selectedGameMode &&
         selectedDeckId &&
@@ -529,12 +595,23 @@ function renderStartButton() {
 
             <button
                 class="startGameButton"
-                onclick="startGame()"
+                id="startGameButton"
             >
                 PLAY
             </button>
 
         `;
+
+
+        document
+            .getElementById(
+                "startGameButton"
+            )
+            .addEventListener(
+                "click",
+                startGame
+            );
+
 
     } else {
 
@@ -551,6 +628,15 @@ function renderStartButton() {
 
 function startGame() {
 
+    console.log(
+        "Starting game..."
+    );
+
+
+    // ==================================================
+    // CHECK MODE
+    // ==================================================
+
     if (!selectedGameMode) {
 
         alert(
@@ -561,6 +647,10 @@ function startGame() {
 
     }
 
+
+    // ==================================================
+    // CHECK DECK
+    // ==================================================
 
     if (!selectedDeckId) {
 
@@ -573,6 +663,10 @@ function startGame() {
     }
 
 
+    // ==================================================
+    // CHECK OPPONENT
+    // ==================================================
+
     if (!selectedOpponent) {
 
         alert(
@@ -584,9 +678,15 @@ function startGame() {
     }
 
 
+    // ==================================================
+    // FIND DECK
+    // ==================================================
+
     const deck =
         decks.find(
-            deck => deck.id === selectedDeckId
+            deck =>
+                deck.id ===
+                selectedDeckId
         );
 
 
@@ -600,6 +700,10 @@ function startGame() {
 
     }
 
+
+    // ==================================================
+    // VALIDATE
+    // ==================================================
 
     const validation =
         validateDeck(
@@ -622,11 +726,6 @@ function startGame() {
     // ==================================================
     // AI DECK
     // ==================================================
-    //
-    // Voor nu gebruikt de AI hetzelfde deck.
-    // Later krijgt de AI zijn eigen deck-building/
-    // deck-selection systeem.
-    // ==================================================
 
     const opponentDeck =
         JSON.parse(
@@ -635,13 +734,57 @@ function startGame() {
 
 
     // ==================================================
-    // START ENGINE
+    // SAVE GAME CONFIG
     // ==================================================
 
-    startGameEngine(
-        selectedGameMode,
-        deck,
-        opponentDeck
-    );
+    const gameConfig = {
+
+        mode:
+            selectedGameMode,
+
+        playerDeck:
+            deck,
+
+        opponentDeck:
+            opponentDeck,
+
+        opponent:
+            selectedOpponent
+
+    };
+
+
+    try {
+
+        sessionStorage.setItem(
+            "mtg_pending_game",
+            JSON.stringify(
+                gameConfig
+            )
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Could not save game config:",
+            error
+        );
+
+
+        alert(
+            "Could not prepare the game."
+        );
+
+        return;
+
+    }
+
+
+    // ==================================================
+    // OPEN GAME
+    // ==================================================
+
+    window.location.href =
+        "game/game.html";
 
 }
