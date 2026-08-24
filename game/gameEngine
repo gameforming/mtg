@@ -8,9 +8,184 @@ let currentGame = null;
 // ======================================================
 // START GAME
 // ======================================================
-async function loadCardData(cards) {
+
+async function startGameEngine(
+    mode,
+    playerDeck,
+    opponentDeck
+) {
+
+    console.log("Starting MTG game...");
+
+
+    const playerLibrary =
+        prepareDeck(playerDeck);
+
+
+    const opponentLibrary =
+        prepareDeck(opponentDeck);
+
+
+    console.log(
+        "Loading player cards..."
+    );
+
+
+    await loadCardData(
+        playerLibrary
+    );
+
+
+    console.log(
+        "Loading opponent cards..."
+    );
+
+
+    await loadCardData(
+        opponentLibrary
+    );
+
+
+    currentGame =
+        createGameState(
+            mode,
+            playerLibrary,
+            opponentLibrary
+        );
+
+
+    shuffle(
+        currentGame.players[0].library
+    );
+
+
+    shuffle(
+        currentGame.players[1].library
+    );
+
+
+    drawCards(
+        0,
+        mode?.rules?.startingHand || 7
+    );
+
+
+    drawCards(
+        1,
+        mode?.rules?.startingHand || 7
+    );
+
+
+    currentGame.status =
+        "mulligan";
+
+
+    logGame(
+        "Both players drew their opening hands."
+    );
+
+
+    renderGame();
+
+}
+
+
+// ======================================================
+// PREPARE DECK
+// ======================================================
+
+function prepareDeck(deck) {
+
+    const cards = [];
+
+
+    if (!deck || !deck.cards) {
+
+        console.error(
+            "Invalid deck:",
+            deck
+        );
+
+        return cards;
+
+    }
+
+
+    deck.cards.forEach(card => {
+
+        const amount =
+            Number(card.amount) || 0;
+
+
+        for (
+            let i = 0;
+            i < amount;
+            i++
+        ) {
+
+            cards.push({
+
+                id: card.id,
+
+                name: card.name,
+
+                image:
+                    card.image ||
+                    "",
+
+                instanceId:
+                    crypto.randomUUID(),
+
+                tapped: false,
+
+                summoningSickness: true,
+
+                attacking: false,
+
+                blocking: false,
+
+                blockingTarget: null,
+
+                damage: 0,
+
+                typeLine: "",
+
+                oracleText: "",
+
+                manaCost: "",
+
+                power: null,
+
+                toughness: null,
+
+                colors: [],
+
+                types: [],
+
+                subtypes: []
+
+            });
+
+        }
+
+    });
+
+
+    return cards;
+
+}
+
+
+// ======================================================
+// LOAD CARD DATA
+// ======================================================
+
+async function loadCardData(
+    cards
+) {
 
     const cache = {};
+
 
     for (const card of cards) {
 
@@ -35,7 +210,14 @@ async function loadCardData(cards) {
 
 
             if (!response.ok) {
+
+                console.warn(
+                    "Scryfall failed:",
+                    card.name
+                );
+
                 continue;
+
             }
 
 
@@ -93,7 +275,7 @@ async function loadCardData(cards) {
         } catch (error) {
 
             console.error(
-                "Could not load:",
+                "Card loading error:",
                 card.name,
                 error
             );
@@ -105,18 +287,36 @@ async function loadCardData(cards) {
 }
 
 
-function getCardTypes(typeLine) {
+// ======================================================
+// CARD TYPES
+// ======================================================
+
+function getCardTypes(
+    typeLine
+) {
 
     const beforeDash =
-        typeLine.split("—")[0].trim();
+        typeLine
+            .split("—")[0]
+            .trim();
 
 
-    return beforeDash.split(" ");
+    if (!beforeDash) {
+
+        return [];
+
+    }
+
+
+    return beforeDash
+        .split(/\s+/);
 
 }
 
 
-function getCardSubtypes(typeLine) {
+function getCardSubtypes(
+    typeLine
+) {
 
     if (
         !typeLine.includes("—")
@@ -130,130 +330,7 @@ function getCardSubtypes(typeLine) {
     return typeLine
         .split("—")[1]
         .trim()
-        .split(" ");
-
-}
-async function startGameEngine(
-    mode,
-    playerDeck,
-    opponentDeck
-) {
-
-    const playerLibrary =
-        prepareDeck(playerDeck);
-
-    const opponentLibrary =
-        prepareDeck(opponentDeck);
-
-
-    // NIEUW
-    await loadCardData(
-        playerLibrary
-    );
-
-    await loadCardData(
-        opponentLibrary
-    );
-
-
-    currentGame = createGameState(
-        mode,
-        playerLibrary,
-        opponentLibrary
-    );
-
-
-    shuffle(
-        currentGame.players[0].library
-    );
-
-    shuffle(
-        currentGame.players[1].library
-    );
-
-
-    drawCards(
-        0,
-        mode.rules.startingHand
-    );
-
-    drawCards(
-        1,
-        mode.rules.startingHand
-    );
-
-
-    currentGame.status =
-        "mulligan";
-
-
-    openGamePage();
-
-}
-
-// ======================================================
-// PREPARE DECK
-// ======================================================
-
-function prepareDeck(deck) {
-
-    const cards = [];
-
-
-    deck.cards.forEach(card => {
-
-        for (
-            let i = 0;
-            i < card.amount;
-            i++
-        ) {
-
-            cards.push({
-
-                id: card.id,
-
-                name: card.name,
-
-                image: card.image,
-
-                instanceId:
-                    crypto.randomUUID(),
-
-                tapped: false,
-
-                summoningSickness: true,
-
-                attacking: false,
-
-                blocking: false,
-
-                damage: 0,
-
-                // Filled by card data later
-                typeLine: "",
-
-                oracleText: "",
-
-                manaCost: "",
-
-                power: null,
-
-                toughness: null,
-
-                colors: [],
-
-                types: [],
-
-                subtypes: []
-
-            });
-
-        }
-
-    });
-
-
-    return cards;
+        .split(/\s+/);
 
 }
 
@@ -296,17 +373,21 @@ function shuffle(array) {
 // DRAW
 // ======================================================
 
-function drawCard(playerId) {
+function drawCard(
+    playerId
+) {
 
     const player =
         currentGame.players[playerId];
 
 
-    if (player.library.length === 0) {
+    if (
+        player.library.length === 0
+    ) {
 
         loseGame(
             playerId,
-            "You tried to draw from an empty library."
+            "Your library is empty."
         );
 
         return null;
@@ -343,12 +424,18 @@ function drawCards(
     ) {
 
         if (
-            currentGame.status === "finished"
+            currentGame.status ===
+            "finished"
         ) {
+
             return;
+
         }
 
-        drawCard(playerId);
+
+        drawCard(
+            playerId
+        );
 
     }
 
@@ -359,17 +446,31 @@ function drawCards(
 // MULLIGAN
 // ======================================================
 
-function mulliganOpeningHand(playerId) {
+function mulliganOpeningHand(
+    playerId
+) {
 
     if (
-        currentGame.status !== "mulligan"
+        currentGame.status !==
+        "mulligan"
     ) {
+
         return;
+
     }
 
 
     const player =
         currentGame.players[playerId];
+
+
+    if (
+        player.handKept
+    ) {
+
+        return;
+
+    }
 
 
     player.library.push(
@@ -385,9 +486,18 @@ function mulliganOpeningHand(playerId) {
     );
 
 
+    const newHandSize =
+        Math.max(
+            0,
+            (currentGame.modeData.rules?.startingHand || 7)
+            - player.mulligans
+            - 1
+        );
+
+
     drawCards(
         playerId,
-        currentGame.modeData.rules.startingHand
+        newHandSize
     );
 
 
@@ -403,12 +513,17 @@ function mulliganOpeningHand(playerId) {
 // KEEP HAND
 // ======================================================
 
-function keepOpeningHand(playerId) {
+function keepOpeningHand(
+    playerId
+) {
 
     if (
-        currentGame.status !== "mulligan"
+        currentGame.status !==
+        "mulligan"
     ) {
+
         return;
+
     }
 
 
@@ -416,12 +531,12 @@ function keepOpeningHand(playerId) {
         currentGame.players[playerId];
 
 
-    if (player.handKept) {
-        return;
-    }
-
-
     player.handKept = true;
+
+
+    logGame(
+        `${player.name} kept their hand.`
+    );
 
 
     checkMulliganFinished();
@@ -430,14 +545,15 @@ function keepOpeningHand(playerId) {
 
 
 // ======================================================
-// CHECK MULLIGAN
+// MULLIGAN FINISHED
 // ======================================================
 
 function checkMulliganFinished() {
 
     const ready =
         currentGame.players.every(
-            player => player.handKept
+            player =>
+                player.handKept
         );
 
 
@@ -456,25 +572,26 @@ function checkMulliganFinished() {
 
 
 // ======================================================
-// START FIRST TURN
+// FIRST TURN
 // ======================================================
 
 function startFirstTurn() {
 
-    currentGame.status = "playing";
+    currentGame.status =
+        "playing";
+
 
     currentGame.turn = 1;
 
+
     currentGame.activePlayer = 0;
+
+
+    currentGame.priorityPlayer = 0;
+
 
     currentGame.firstTurn = true;
 
-    currentGame.phase = "beginning";
-
-    currentGame.step = "untap";
-
-
-    logGame("The game begins.");
 
     beginTurn();
 
@@ -488,9 +605,12 @@ function startFirstTurn() {
 function beginTurn() {
 
     if (
-        currentGame.status === "finished"
+        currentGame.status ===
+        "finished"
     ) {
+
         return;
+
     }
 
 
@@ -500,65 +620,96 @@ function beginTurn() {
         ];
 
 
-    currentGame.phase = "beginning";
+    currentGame.phase =
+        "beginning";
 
 
-    // Untap
-    untapPlayer(player.id);
+    currentGame.step =
+        "untap";
 
 
-    // Remove summoning sickness
-    player.battlefield.forEach(card => {
-
-        card.summoningSickness = false;
-
-    });
+    player.landsPlayed = 0;
 
 
-    // Mana resets
-    player.mana.available = 0;
-
-    player.mana.maximum = 0;
-
-
-    // Upkeep
-    currentGame.step = "upkeep";
-
-
-    logGame(
-        `Turn ${currentGame.turn}: ${player.name}'s upkeep.`
+    resetMana(
+        player.id
     );
 
 
-    // Draw
-    currentGame.step = "draw";
+    untapPlayer(
+        player.id
+    );
 
 
-    // First player does not draw turn 1
+    player.battlefield.forEach(
+        card => {
+
+            card.summoningSickness =
+                false;
+
+            card.attacking = false;
+
+            card.blocking = false;
+
+            card.blockingTarget =
+                null;
+
+            card.damage = 0;
+
+        }
+    );
+
+
+    currentGame.step =
+        "upkeep";
+
+
+    logGame(
+        `${player.name}'s upkeep.`
+    );
+
+
+    currentGame.step =
+        "draw";
+
+
     if (
-        !(currentGame.turn === 1 &&
-          player.id === 0)
+        !(
+            currentGame.turn === 1 &&
+            player.id === 0
+        )
     ) {
 
-        drawCard(player.id);
+        drawCard(
+            player.id
+        );
 
     }
 
 
-    currentGame.phase = "main1";
+    currentGame.phase =
+        "main1";
 
-    currentGame.step = "main";
+
+    currentGame.step =
+        "main";
+
+
+    currentGame.priorityPlayer =
+        player.id;
 
 
     renderGame();
 
 
-    // AI
     if (
         player.id === 1
     ) {
 
-        runAI();
+        setTimeout(
+            runAI,
+            700
+        );
 
     }
 
@@ -569,28 +720,46 @@ function beginTurn() {
 // UNTAP
 // ======================================================
 
-function untapPlayer(playerId) {
+function untapPlayer(
+    playerId
+) {
 
     const player =
         currentGame.players[playerId];
 
 
-    player.battlefield.forEach(card => {
+    player.battlefield.forEach(
+        card => {
 
-        card.tapped = false;
+            card.tapped = false;
 
-        card.attacking = false;
-
-        card.blocking = false;
-
-        card.damage = 0;
-
-    });
-
-
-    logGame(
-        `${player.name} untapped their permanents.`
+        }
     );
+
+}
+
+
+// ======================================================
+// RESET MANA
+// ======================================================
+
+function resetMana(
+    playerId
+) {
+
+    const mana =
+        currentGame.players[playerId].mana;
+
+
+    mana.white = 0;
+    mana.blue = 0;
+    mana.black = 0;
+    mana.red = 0;
+    mana.green = 0;
+    mana.colorless = 0;
+
+    mana.available = 0;
+    mana.maximum = 0;
 
 }
 
@@ -602,27 +771,31 @@ function untapPlayer(playerId) {
 function endTurn() {
 
     if (
-        currentGame.status !== "playing"
+        currentGame.status !==
+        "playing"
     ) {
+
         return;
+
     }
 
 
-    const player =
-        currentGame.players[
-            currentGame.activePlayer
-        ];
+    currentGame.players[
+        currentGame.activePlayer
+    ].battlefield.forEach(
+        card => {
 
+            card.attacking = false;
 
-    player.battlefield.forEach(card => {
+            card.blocking = false;
 
-        card.attacking = false;
+            card.blockingTarget =
+                null;
 
-        card.blocking = false;
+            card.damage = 0;
 
-        card.damage = 0;
-
-    });
+        }
+    );
 
 
     currentGame.activePlayer =
@@ -634,10 +807,17 @@ function endTurn() {
     currentGame.turn++;
 
 
-    logGame(
-        `Turn ${currentGame.turn}: ` +
-        `${currentGame.players[currentGame.activePlayer].name}'s turn.`
-    );
+    currentGame.combat = {
+
+        attackers: [],
+
+        blockers: [],
+
+        damageAssigned: false,
+
+        resolved: false
+
+    };
 
 
     beginTurn();
@@ -652,16 +832,21 @@ function endTurn() {
 function nextPhase() {
 
     if (
-        currentGame.status !== "playing"
+        currentGame.status !==
+        "playing"
     ) {
+
         return;
+
     }
 
 
     if (
         currentGame.activePlayer !== 0
     ) {
+
         return;
+
     }
 
 
@@ -671,9 +856,8 @@ function nextPhase() {
 
         case "main1":
 
-            currentGame.phase = "combat";
-
-            currentGame.step = "beginning";
+            currentGame.phase =
+                "combat";
 
             startCombat();
 
@@ -682,9 +866,12 @@ function nextPhase() {
 
         case "combat":
 
-            currentGame.phase = "main2";
+            resolveCombat();
 
-            currentGame.step = "main";
+
+            currentGame.phase =
+                "main2";
+
 
             renderGame();
 
@@ -693,11 +880,17 @@ function nextPhase() {
 
         case "main2":
 
-            currentGame.phase = "ending";
+            currentGame.phase =
+                "ending";
 
-            currentGame.step = "end";
 
             renderGame();
+
+
+            setTimeout(
+                endTurn,
+                500
+            );
 
             break;
 
@@ -719,17 +912,22 @@ function nextPhase() {
 
 function startCombat() {
 
-    logGame("Combat begins.");
-
     currentGame.combat = {
 
         attackers: [],
 
         blockers: [],
 
-        damageAssigned: false
+        damageAssigned: false,
+
+        resolved: false
 
     };
+
+
+    logGame(
+        "Combat begins."
+    );
 
 
     renderGame();
@@ -738,29 +936,30 @@ function startCombat() {
 
 
 // ======================================================
-// DECLARE ATTACKERS
+// TOGGLE ATTACK
 // ======================================================
 
-function toggleAttack(cardInstanceId) {
+function toggleAttack(
+    cardInstanceId
+) {
 
     if (
-        currentGame.status !== "playing"
+        currentGame.phase !==
+        "combat"
     ) {
+
         return;
+
     }
 
 
     if (
-        currentGame.activePlayer !== 0
+        currentGame.activePlayer !==
+        0
     ) {
-        return;
-    }
 
-
-    if (
-        currentGame.phase !== "combat"
-    ) {
         return;
+
     }
 
 
@@ -770,14 +969,25 @@ function toggleAttack(cardInstanceId) {
 
     const card =
         player.battlefield.find(
-            card =>
-                card.instanceId ===
+            c =>
+                c.instanceId ===
                 cardInstanceId
         );
 
 
     if (!card) {
+
         return;
+
+    }
+
+
+    if (
+        !isCreature(card)
+    ) {
+
+        return;
+
     }
 
 
@@ -785,7 +995,9 @@ function toggleAttack(cardInstanceId) {
         card.tapped ||
         card.summoningSickness
     ) {
+
         return;
+
     }
 
 
@@ -816,122 +1028,182 @@ function toggleAttack(cardInstanceId) {
 
 
 // ======================================================
-// DECLARE BLOCKER
+// RESOLVE COMBAT
 // ======================================================
 
-function toggleBlock(
-    blockerId,
-    attackerId
+function resolveCombat() {
+
+    if (
+        currentGame.phase !==
+        "combat"
+    ) {
+
+        return;
+
+    }
+
+
+    const player =
+        currentGame.players[0];
+
+
+    const opponent =
+        currentGame.players[1];
+
+
+    const attackers =
+        player.battlefield.filter(
+            card =>
+                card.attacking
+        );
+
+
+    if (
+        attackers.length === 0
+    ) {
+
+        logGame(
+            "No attackers declared."
+        );
+
+
+        currentGame.combat.resolved =
+            true;
+
+
+        renderGame();
+
+        return;
+
+    }
+
+
+    // AI automatically blocks
+    aiDeclareBlockers(
+        attackers
+    );
+
+
+    attackers.forEach(
+        attacker => {
+
+            attacker.tapped = true;
+
+
+            const blocker =
+                opponent.battlefield.find(
+                    card =>
+                        card.blockingTarget ===
+                        attacker.instanceId
+                );
+
+
+            if (!blocker) {
+
+                dealDamage(
+                    1,
+                    getPower(attacker)
+                );
+
+
+                return;
+
+            }
+
+
+            const attackPower =
+                getPower(attacker);
+
+
+            const blockPower =
+                getPower(blocker);
+
+
+            attacker.damage +=
+                blockPower;
+
+
+            blocker.damage +=
+                attackPower;
+
+        }
+    );
+
+
+    checkCreatureDeath(0);
+
+    checkCreatureDeath(1);
+
+
+    currentGame.combat.resolved =
+        true;
+
+
+    renderGame();
+
+}
+
+
+// ======================================================
+// AI BLOCKERS
+// ======================================================
+
+function aiDeclareBlockers(
+    attackers
 ) {
 
     const opponent =
         currentGame.players[1];
 
 
-    const blocker =
-        opponent.battlefield.find(
+    const availableBlockers =
+        opponent.battlefield.filter(
             card =>
-                card.instanceId === blockerId
+                isCreature(card) &&
+                !card.tapped &&
+                !card.summoningSickness
         );
 
 
-    if (!blocker) {
-        return;
-    }
+    attackers.forEach(
+        attacker => {
+
+            const blocker =
+                availableBlockers.find(
+                    candidate =>
+                        getPower(candidate) >=
+                        getPower(attacker)
+                );
 
 
-    blocker.blocking =
-        !blocker.blocking;
+            if (!blocker) {
+
+                return;
+
+            }
 
 
-    blocker.blockingTarget =
-        blocker.blocking
-            ? attackerId
-            : null;
+            blocker.blocking = true;
+
+            blocker.blockingTarget =
+                attacker.instanceId;
 
 
-    renderGame();
-
-}
-
-
-// ======================================================
-// RESOLVE COMBAT
-// ======================================================
-
-function resolveCombat() {
-
-    const attackers =
-        currentGame.players[0]
-            .battlefield
-            .filter(card =>
-                card.attacking
+            availableBlockers.splice(
+                availableBlockers.indexOf(
+                    blocker
+                ),
+                1
             );
-
-
-    const opponent =
-        currentGame.players[1];
-
-
-    for (const attacker of attackers) {
-
-        attacker.tapped = true;
-
-
-        const blocker =
-            opponent.battlefield.find(
-                card =>
-                    card.blockingTarget ===
-                    attacker.instanceId
-            );
-
-
-        if (!blocker) {
-
-            dealDamage(
-                1,
-                attacker.power || 0
-            );
-
-            continue;
 
         }
-
-
-        const attackerPower =
-            Number(attacker.power) || 0;
-
-
-        const blockerPower =
-            Number(blocker.power) || 0;
-
-
-        attacker.damage += blockerPower;
-
-        blocker.damage += attackerPower;
-
-
-        checkCreatureDeath(
-            0
-        );
-
-        checkCreatureDeath(
-            1
-        );
-
-    }
-
-
-    currentGame.combat.attackers = [];
-
-
-    renderGame();
+    );
 
 }
 
 
 // ======================================================
-// DAMAGE TO PLAYER
+// DAMAGE
 // ======================================================
 
 function dealDamage(
@@ -943,11 +1215,12 @@ function dealDamage(
         currentGame.players[playerId];
 
 
-    player.life -= amount;
+    player.life -=
+        amount;
 
 
     logGame(
-        `${player.name} took ${amount} damage.`
+        `${player.name} takes ${amount} damage.`
     );
 
 
@@ -969,48 +1242,69 @@ function dealDamage(
 // CREATURE DEATH
 // ======================================================
 
-function checkCreatureDeath(playerId) {
+function checkCreatureDeath(
+    playerId
+) {
 
     const player =
         currentGame.players[playerId];
 
 
     const dead =
-        player.battlefield.filter(card => {
+        player.battlefield.filter(
+            card => {
 
-            if (
-                card.toughness === null
-            ) {
-                return false;
+                if (
+                    !isCreature(card)
+                ) {
+
+                    return false;
+
+                }
+
+
+                const toughness =
+                    getToughness(card);
+
+
+                return (
+                    card.damage >=
+                    toughness
+                );
+
             }
-
-
-            return (
-                card.damage >=
-                Number(card.toughness)
-            );
-
-        });
-
-
-    dead.forEach(card => {
-
-        player.battlefield =
-            player.battlefield.filter(
-                c =>
-                    c.instanceId !==
-                    card.instanceId
-            );
-
-
-        player.graveyard.push(card);
-
-
-        logGame(
-            `${card.name} was destroyed.`
         );
 
-    });
+
+    dead.forEach(
+        card => {
+
+            player.battlefield =
+                player.battlefield.filter(
+                    c =>
+                        c.instanceId !==
+                        card.instanceId
+                );
+
+
+            card.tapped = false;
+
+            card.attacking = false;
+
+            card.blocking = false;
+
+
+            player.graveyard.push(
+                card
+            );
+
+
+            logGame(
+                `${card.name} died.`
+            );
+
+        }
+    );
 
 }
 
@@ -1032,22 +1326,34 @@ function playLand(
         playerId !==
         currentGame.activePlayer
     ) {
+
         return false;
+
     }
 
 
     if (
-        currentGame.phase !== "main1" &&
-        currentGame.phase !== "main2"
+        currentGame.phase !==
+            "main1" &&
+        currentGame.phase !==
+            "main2"
     ) {
+
         return false;
+
     }
 
 
     if (
         player.landsPlayed >= 1
     ) {
+
+        logGame(
+            "You already played a land this turn."
+        );
+
         return false;
+
     }
 
 
@@ -1060,7 +1366,9 @@ function playLand(
 
 
     if (index === -1) {
+
         return false;
+
     }
 
 
@@ -1071,7 +1379,9 @@ function playLand(
     if (
         !isLand(card)
     ) {
+
         return false;
+
     }
 
 
@@ -1081,7 +1391,9 @@ function playLand(
     );
 
 
-    player.battlefield.push(card);
+    player.battlefield.push(
+        card
+    );
 
 
     player.landsPlayed++;
@@ -1101,7 +1413,123 @@ function playLand(
 
 
 // ======================================================
-// TAP LAND FOR MANA
+// GET LAND COLOR
+// ======================================================
+
+function getLandMana(
+    card
+) {
+
+    const text =
+        (
+            card.oracleText ||
+            ""
+        ).toLowerCase();
+
+
+    if (
+        text.includes("{w}")
+    ) {
+
+        return "white";
+
+    }
+
+
+    if (
+        text.includes("{u}")
+    ) {
+
+        return "blue";
+
+    }
+
+
+    if (
+        text.includes("{b}")
+    ) {
+
+        return "black";
+
+    }
+
+
+    if (
+        text.includes("{r}")
+    ) {
+
+        return "red";
+
+    }
+
+
+    if (
+        text.includes("{g}")
+    ) {
+
+        return "green";
+
+    }
+
+
+    // Basic land detection
+
+    const name =
+        card.name.toLowerCase();
+
+
+    if (
+        name === "plains"
+    ) {
+
+        return "white";
+
+    }
+
+
+    if (
+        name === "island"
+    ) {
+
+        return "blue";
+
+    }
+
+
+    if (
+        name === "swamp"
+    ) {
+
+        return "black";
+
+    }
+
+
+    if (
+        name === "mountain"
+    ) {
+
+        return "red";
+
+    }
+
+
+    if (
+        name === "forest"
+    ) {
+
+        return "green";
+
+    }
+
+
+    return "colorless";
+
+}
+
+
+// ======================================================
+// TAP LAND
 // ======================================================
 
 function tapLand(
@@ -1115,35 +1543,52 @@ function tapLand(
 
     const card =
         player.battlefield.find(
-            card =>
-                card.instanceId ===
+            c =>
+                c.instanceId ===
                 cardInstanceId
         );
 
 
     if (!card) {
+
         return;
+
     }
 
 
-    if (!isLand(card)) {
+    if (
+        !isLand(card)
+    ) {
+
         return;
+
     }
 
 
-    if (card.tapped) {
+    if (
+        card.tapped
+    ) {
+
         return;
+
     }
 
 
     card.tapped = true;
 
 
+    const color =
+        getLandMana(card);
+
+
+    player.mana[color]++;
+
+
     player.mana.available++;
 
 
     logGame(
-        `${player.name} generated 1 mana.`
+        `${player.name} tapped ${card.name} for ${color} mana.`
     );
 
 
@@ -1165,6 +1610,28 @@ function castCard(
         currentGame.players[playerId];
 
 
+    if (
+        currentGame.activePlayer !==
+        playerId
+    ) {
+
+        return false;
+
+    }
+
+
+    if (
+        currentGame.phase !==
+            "main1" &&
+        currentGame.phase !==
+            "main2"
+    ) {
+
+        return false;
+
+    }
+
+
     const index =
         player.hand.findIndex(
             card =>
@@ -1174,7 +1641,9 @@ function castCard(
 
 
     if (index === -1) {
+
         return false;
+
     }
 
 
@@ -1182,7 +1651,9 @@ function castCard(
         player.hand[index];
 
 
-    if (isLand(card)) {
+    if (
+        isLand(card)
+    ) {
 
         return false;
 
@@ -1190,24 +1661,32 @@ function castCard(
 
 
     const cost =
-        getManaCost(card);
+        parseManaCost(
+            card.manaCost
+        );
 
 
     if (
-        player.mana.available <
-        cost
+        !canPayMana(
+            player,
+            cost
+        )
     ) {
 
         logGame(
-            `Not enough mana for ${card.name}.`
+            `Not enough mana to cast ${card.name}.`
         );
+
 
         return false;
 
     }
 
 
-    player.mana.available -= cost;
+    payMana(
+        player,
+        cost
+    );
 
 
     player.hand.splice(
@@ -1216,14 +1695,21 @@ function castCard(
     );
 
 
-    // Creature
+    // ==============================================
+    // CREATURE
+    // ==============================================
+
     if (
         isCreature(card)
     ) {
 
-        card.summoningSickness = true;
+        card.summoningSickness =
+            true;
 
-        player.battlefield.push(card);
+
+        player.battlefield.push(
+            card
+        );
 
 
         logGame(
@@ -1231,12 +1717,18 @@ function castCard(
         );
 
 
+        renderGame();
+
+
         return true;
 
     }
 
 
-    // Instant / Sorcery
+    // ==============================================
+    // NONCREATURE SPELL
+    // ==============================================
+
     if (
         isInstant(card) ||
         isSorcery(card)
@@ -1247,12 +1739,353 @@ function castCard(
             card
         );
 
+
         return true;
 
     }
 
 
-    return false;
+    // Unknown permanent
+    player.battlefield.push(
+        card
+    );
+
+
+    logGame(
+        `${player.name} cast ${card.name}.`
+    );
+
+
+    renderGame();
+
+
+    return true;
+
+}
+
+
+// ======================================================
+// PARSE MANA COST
+// ======================================================
+
+function parseManaCost(
+    manaCost
+) {
+
+    const result = {
+
+        generic: 0,
+
+        white: 0,
+
+        blue: 0,
+
+        black: 0,
+
+        red: 0,
+
+        green: 0,
+
+        colorless: 0
+
+    };
+
+
+    if (!manaCost) {
+
+        return result;
+
+    }
+
+
+    const symbols =
+        manaCost.match(
+            /\{[^}]+\}/g
+        ) || [];
+
+
+    symbols.forEach(
+        symbol => {
+
+            const value =
+                symbol
+                    .replace(
+                        /[{}]/g,
+                        ""
+                    )
+                    .toUpperCase();
+
+
+            if (
+                /^\d+$/.test(value)
+            ) {
+
+                result.generic +=
+                    Number(value);
+
+                return;
+
+            }
+
+
+            switch (value) {
+
+                case "W":
+
+                    result.white++;
+
+                    break;
+
+                case "U":
+
+                    result.blue++;
+
+                    break;
+
+                case "B":
+
+                    result.black++;
+
+                    break;
+
+                case "R":
+
+                    result.red++;
+
+                    break;
+
+                case "G":
+
+                    result.green++;
+
+                    break;
+
+                case "C":
+
+                    result.colorless++;
+
+                    break;
+
+                default:
+
+                    // Hybrid / X / phyrexian
+                    // mana will be handled later.
+
+                    break;
+
+            }
+
+        }
+    );
+
+
+    return result;
+
+}
+
+
+// ======================================================
+// TOTAL MANA
+// ======================================================
+
+function getTotalMana(
+    player
+) {
+
+    return (
+        player.mana.white +
+        player.mana.blue +
+        player.mana.black +
+        player.mana.red +
+        player.mana.green +
+        player.mana.colorless
+    );
+
+}
+
+
+// ======================================================
+// CAN PAY MANA
+// ======================================================
+
+function canPayMana(
+    player,
+    cost
+) {
+
+    let white =
+        player.mana.white;
+
+    let blue =
+        player.mana.blue;
+
+    let black =
+        player.mana.black;
+
+    let red =
+        player.mana.red;
+
+    let green =
+        player.mana.green;
+
+    let colorless =
+        player.mana.colorless;
+
+
+    if (
+        white < cost.white ||
+        blue < cost.blue ||
+        black < cost.black ||
+        red < cost.red ||
+        green < cost.green ||
+        colorless < cost.colorless
+    ) {
+
+        return false;
+
+    }
+
+
+    const coloredUsed =
+        cost.white +
+        cost.blue +
+        cost.black +
+        cost.red +
+        cost.green +
+        cost.colorless;
+
+
+    const remaining =
+        (
+            white -
+            cost.white
+        ) +
+
+        (
+            blue -
+            cost.blue
+        ) +
+
+        (
+            black -
+            cost.black
+        ) +
+
+        (
+            red -
+            cost.red
+        ) +
+
+        (
+            green -
+            cost.green
+        ) +
+
+        (
+            colorless -
+            cost.colorless
+        );
+
+
+    return (
+        remaining >=
+        cost.generic
+    );
+
+}
+
+
+// ======================================================
+// PAY MANA
+// ======================================================
+
+function payMana(
+    player,
+    cost
+) {
+
+    player.mana.white -=
+        cost.white;
+
+    player.mana.blue -=
+        cost.blue;
+
+    player.mana.black -=
+        cost.black;
+
+    player.mana.red -=
+        cost.red;
+
+    player.mana.green -=
+        cost.green;
+
+    player.mana.colorless -=
+        cost.colorless;
+
+
+    let generic =
+        cost.generic;
+
+
+    const colors = [
+
+        "colorless",
+        "white",
+        "blue",
+        "black",
+        "red",
+        "green"
+
+    ];
+
+
+    for (
+        const color of colors
+    ) {
+
+        const amount =
+            Math.min(
+                player.mana[color],
+                generic
+            );
+
+
+        player.mana[color] -=
+            amount;
+
+
+        generic -=
+            amount;
+
+
+        if (
+            generic <= 0
+        ) {
+
+            break;
+
+        }
+
+    }
+
+
+    updateAvailableMana(
+        player
+    );
+
+}
+
+
+// ======================================================
+// UPDATE AVAILABLE MANA
+// ======================================================
+
+function updateAvailableMana(
+    player
+) {
+
+    player.mana.available =
+        getTotalMana(player);
 
 }
 
@@ -1272,13 +2105,16 @@ function resolveSpell(
             : 0;
 
 
-    // Basic damage spell detection
     const text =
         (
             card.oracleText ||
             ""
         ).toLowerCase();
 
+
+    // ==============================================
+    // DAMAGE
+    // ==============================================
 
     const damageMatch =
         text.match(
@@ -1302,19 +2138,41 @@ function resolveSpell(
     }
 
 
-    // Basic draw detection
+    // ==============================================
+    // DRAW
+    // ==============================================
+
+    const drawMatch =
+        text.match(
+            /draw\s+(?:a|(\d+))\s+card/
+        );
+
+
     if (
-        text.includes("draw a card")
+        text.includes(
+            "draw a card"
+        )
     ) {
 
         drawCard(
             playerId
         );
 
+    } else if (
+        drawMatch &&
+        drawMatch[1]
+    ) {
+
+        drawCards(
+            playerId,
+            Number(
+                drawMatch[1]
+            )
+        );
+
     }
 
 
-    // Spell goes to graveyard
     currentGame.players[playerId]
         .graveyard
         .push(card);
@@ -1331,7 +2189,7 @@ function resolveSpell(
 
 
 // ======================================================
-// CARD TYPES
+// CARD HELPERS
 // ======================================================
 
 function isLand(card) {
@@ -1370,64 +2228,42 @@ function isSorcery(card) {
 }
 
 
-// ======================================================
-// MANA COST
-// ======================================================
+function getPower(card) {
 
-function getManaCost(card) {
+    const value =
+        Number(card.power);
 
-    if (!card.manaCost) {
+
+    if (
+        Number.isNaN(value)
+    ) {
+
         return 0;
-    }
-
-
-    const matches =
-        card.manaCost.match(
-            /\{(\d+)\}/g
-        );
-
-
-    let cost = 0;
-
-
-    if (matches) {
-
-        matches.forEach(value => {
-
-            cost +=
-                Number(
-                    value.replace(
-                        /[{}]/g,
-                        ""
-                    )
-                );
-
-        });
 
     }
 
 
-    // Colored mana currently counts
-    // as one generic mana each.
-    //
-    // We will replace this with a real
-    // colored mana system next.
+    return value;
 
-    const colored =
-        card.manaCost.match(
-            /\{[WUBRGC]\}/g
-        );
+}
 
 
-    if (colored) {
+function getToughness(card) {
 
-        cost +=
-            colored.length;
+    const value =
+        Number(card.toughness);
+
+
+    if (
+        Number.isNaN(value)
+    ) {
+
+        return 0;
 
     }
 
 
-    return cost;
+    return value;
 
 }
 
@@ -1442,17 +2278,17 @@ function loseGame(
 ) {
 
     if (
-        currentGame.status === "finished"
+        currentGame.status ===
+        "finished"
     ) {
+
         return;
+
     }
 
 
-    const player =
+    const loser =
         currentGame.players[playerId];
-
-
-    player.hasLost = true;
 
 
     const winnerId =
@@ -1464,6 +2300,8 @@ function loseGame(
     const winner =
         currentGame.players[winnerId];
 
+
+    loser.hasLost = true;
 
     winner.hasWon = true;
 
@@ -1477,7 +2315,7 @@ function loseGame(
 
 
     logGame(
-        `${player.name} lost: ${reason}`
+        `${loser.name} lost: ${reason}`
     );
 
 
@@ -1492,13 +2330,17 @@ function loseGame(
 
 
 // ======================================================
-// GAME LOG
+// LOG
 // ======================================================
 
-function logGame(message) {
+function logGame(
+    message
+) {
 
     if (!currentGame) {
+
         return;
+
     }
 
 
