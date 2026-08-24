@@ -1,18 +1,34 @@
 // ======================================================
-// GAME UI
+// MTG GAME UI
+// ======================================================
+//
+// Dit bestand zorgt alleen voor de interface.
+//
+// Game logic:
+//     gameEngine.js
+//
+// Game data:
+//     gameState.js
+//
+// UI:
+//     gameUI.js
 // ======================================================
 
+
+// ======================================================
+// OPEN GAME PAGE
+// ======================================================
 
 function openGamePage() {
 
     window.location.href =
-        "game/game.html";
+        "game.html";
 
 }
 
 
 // ======================================================
-// RENDER GAME
+// RENDER EVERYTHING
 // ======================================================
 
 function renderGame() {
@@ -30,6 +46,8 @@ function renderGame() {
 
     renderGameInfo();
 
+    renderGameControls();
+
     renderGameLog();
 
 }
@@ -44,52 +62,78 @@ function renderPlayers() {
     const player =
         currentGame.players[0];
 
+
     const opponent =
         currentGame.players[1];
 
 
-    document
-        .getElementById(
+    const playerName =
+        document.getElementById(
             "playerName"
-        )
-        .textContent =
-        player.name;
+        );
 
 
-    document
-        .getElementById(
+    const playerLife =
+        document.getElementById(
             "playerLife"
-        )
-        .textContent =
-        player.life;
+        );
 
 
-    document
-        .getElementById(
+    const opponentName =
+        document.getElementById(
             "opponentName"
-        )
-        .textContent =
-        opponent.name;
+        );
 
 
-    document
-        .getElementById(
+    const opponentLife =
+        document.getElementById(
             "opponentLife"
-        )
-        .textContent =
-        opponent.life;
+        );
+
+
+    if (playerName) {
+
+        playerName.textContent =
+            player.name;
+
+    }
+
+
+    if (playerLife) {
+
+        playerLife.textContent =
+            player.life;
+
+    }
+
+
+    if (opponentName) {
+
+        opponentName.textContent =
+            opponent.name;
+
+    }
+
+
+    if (opponentLife) {
+
+        opponentLife.textContent =
+            opponent.life;
+
+    }
 
 }
 
 
 // ======================================================
-// HANDS
+// RENDER HANDS
 // ======================================================
 
 function renderHands() {
 
     const player =
         currentGame.players[0];
+
 
     const opponent =
         currentGame.players[1];
@@ -107,9 +151,9 @@ function renderHands() {
         );
 
 
-    // ----------------------------------------------
+    // ==================================================
     // PLAYER HAND
-    // ----------------------------------------------
+    // ==================================================
 
     playerHand.innerHTML = "";
 
@@ -117,21 +161,40 @@ function renderHands() {
     player.hand.forEach(card => {
 
         const element =
-            document.createElement("div");
+            createCardElement(
+                card,
+                true
+            );
 
 
-        element.className =
-            "gameCard";
+        // ==============================================
+        // LEFT CLICK
+        // ==============================================
+
+        element.addEventListener(
+            "click",
+            () => {
+
+                handleCardClick(
+                    card
+                );
+
+            }
+        );
 
 
-        element.innerHTML = `
+        // ==============================================
+        // RIGHT CLICK
+        // ==============================================
 
-            <img
-                src="${card.image}"
-                alt="${escapeHTML(card.name)}"
-            >
+        element.addEventListener(
+            "contextmenu",
+            event => {
 
-        `;
+                event.preventDefault();
+
+            }
+        );
 
 
         playerHand.appendChild(
@@ -141,9 +204,9 @@ function renderHands() {
     });
 
 
-    // ----------------------------------------------
+    // ==================================================
     // OPPONENT HAND
-    // ----------------------------------------------
+    // ==================================================
 
     opponentHand.innerHTML = "";
 
@@ -151,7 +214,9 @@ function renderHands() {
     opponent.hand.forEach(() => {
 
         const element =
-            document.createElement("div");
+            document.createElement(
+                "div"
+            );
 
 
         element.className =
@@ -172,6 +237,107 @@ function renderHands() {
 
 
 // ======================================================
+// CREATE CARD ELEMENT
+// ======================================================
+
+function createCardElement(
+    card,
+    interactive = false
+) {
+
+    const element =
+        document.createElement(
+            "div"
+        );
+
+
+    element.className =
+        "gameCard";
+
+
+    element.dataset.instanceId =
+        card.instanceId;
+
+
+    // ==============================================
+    // CARD IMAGE
+    // ==============================================
+
+    if (card.image) {
+
+        const image =
+            document.createElement(
+                "img"
+            );
+
+
+        image.src =
+            card.image;
+
+
+        image.alt =
+            card.name;
+
+
+        element.appendChild(
+            image
+        );
+
+    } else {
+
+        element.textContent =
+            card.name;
+
+    }
+
+
+    // ==============================================
+    // TAPPED
+    // ==============================================
+
+    if (card.tapped) {
+
+        element.classList.add(
+            "tapped"
+        );
+
+    }
+
+
+    // ==============================================
+    // ATTACKING
+    // ==============================================
+
+    if (card.attacking) {
+
+        element.classList.add(
+            "attacking"
+        );
+
+    }
+
+
+    // ==============================================
+    // SUMMONING SICKNESS
+    // ==============================================
+
+    if (
+        card.summoningSickness
+    ) {
+
+        element.classList.add(
+            "summoningSickness"
+        );
+
+    }
+
+
+    return element;
+
+}
+
+
+// ======================================================
 // BATTLEFIELDS
 // ======================================================
 
@@ -180,27 +346,35 @@ function renderBattlefields() {
     const player =
         currentGame.players[0];
 
+
     const opponent =
         currentGame.players[1];
 
 
     renderBattlefield(
         "playerBattlefield",
-        player.battlefield
+        player.battlefield,
+        true
     );
 
 
     renderBattlefield(
         "opponentBattlefield",
-        opponent.battlefield
+        opponent.battlefield,
+        false
     );
 
 }
 
 
+// ======================================================
+// RENDER BATTLEFIELD
+// ======================================================
+
 function renderBattlefield(
     elementId,
-    cards
+    cards,
+    isPlayer
 ) {
 
     const container =
@@ -209,27 +383,93 @@ function renderBattlefield(
         );
 
 
+    if (!container) {
+        return;
+    }
+
+
     container.innerHTML = "";
 
 
     cards.forEach(card => {
 
         const element =
-            document.createElement("div");
+            createCardElement(
+                card,
+                true
+            );
 
 
-        element.className =
-            "gameCard";
+        // ==================================================
+        // PLAYER CARD INTERACTIONS
+        // ==================================================
+
+        if (isPlayer) {
 
 
-        element.innerHTML = `
+            // ==============================================
+            // LEFT CLICK
+            // ==============================================
 
-            <img
-                src="${card.image}"
-                alt="${escapeHTML(card.name)}"
-            >
+            element.addEventListener(
+                "click",
+                () => {
 
-        `;
+                    handleBattlefieldClick(
+                        card
+                    );
+
+                }
+            );
+
+
+            // ==============================================
+            // DOUBLE CLICK
+            // ==============================================
+
+            element.addEventListener(
+                "dblclick",
+                () => {
+
+                    if (
+                        isCreature(card) &&
+                        currentGame.phase === "combat" &&
+                        currentGame.activePlayer === 0
+                    ) {
+
+                        toggleAttack(
+                            card.instanceId
+                        );
+
+                    }
+
+                }
+            );
+
+
+            // ==============================================
+            // RIGHT CLICK
+            // ==============================================
+
+            element.addEventListener(
+                "contextmenu",
+                event => {
+
+                    event.preventDefault();
+
+
+                    // Right click can later open
+                    // the card interaction menu.
+
+                    console.log(
+                        "Card:",
+                        card.name
+                    );
+
+                }
+            );
+
+        }
 
 
         container.appendChild(
@@ -242,78 +482,52 @@ function renderBattlefield(
 
 
 // ======================================================
-// GAME INFO
+// HAND CARD CLICK
 // ======================================================
 
-function renderGameInfo() {
-
-    document
-        .getElementById(
-            "turnNumber"
-        )
-        .textContent =
-        currentGame.turn;
-
-
-    document
-        .getElementById(
-            "currentPhase"
-        )
-        .textContent =
-        formatPhase(
-            currentGame.phase
-        );
-
-
-    const activePlayer =
-        currentGame.players[
-            currentGame.activePlayer
-        ];
-
-
-    document
-        .getElementById(
-            "gameMessage"
-        )
-        .textContent =
-        `${activePlayer.name}'s turn`;
-
-}
-
-function handleCardClick(card) {
-
-    const player =
-        currentGame.players[0];
-
-
-    // ==========================================
-    // LAND
-    // ==========================================
+function handleCardClick(
+    card
+) {
 
     if (
-        isLand(card)
+        !currentGame
     ) {
+        return;
+    }
 
-        if (
-            currentGame.phase === "main1" ||
-            currentGame.phase === "main2"
-        ) {
 
-            playLand(
-                0,
-                card.instanceId
-            );
-
-        }
+    if (
+        currentGame.status !==
+        "playing"
+    ) {
 
         return;
 
     }
 
 
-    // ==========================================
-    // CREATURE / SPELL
-    // ==========================================
+    // ==============================================
+    // LAND
+    // ==============================================
+
+    if (
+        isLand(card)
+    ) {
+
+        playLand(
+            0,
+            card.instanceId
+        );
+
+
+        return;
+
+    }
+
+
+    // ==============================================
+    // SPELL / CREATURE
+    // ==============================================
 
     if (
         currentGame.phase === "main1" ||
@@ -328,8 +542,332 @@ function handleCardClick(card) {
     }
 
 }
+
+
 // ======================================================
-// LOG
+// BATTLEFIELD CLICK
+// ======================================================
+
+function handleBattlefieldClick(
+    card
+) {
+
+    if (
+        !currentGame
+    ) {
+        return;
+    }
+
+
+    // ==============================================
+    // LAND
+    // ==============================================
+
+    if (
+        isLand(card)
+    ) {
+
+        tapLand(
+            0,
+            card.instanceId
+        );
+
+
+        return;
+
+    }
+
+
+    // ==============================================
+    // COMBAT
+    // ==============================================
+
+    if (
+        currentGame.phase === "combat" &&
+        isCreature(card)
+    ) {
+
+        toggleAttack(
+            card.instanceId
+        );
+
+    }
+
+}
+
+
+// ======================================================
+// GAME INFORMATION
+// ======================================================
+
+function renderGameInfo() {
+
+    const turn =
+        document.getElementById(
+            "turnNumber"
+        );
+
+
+    const turnCenter =
+        document.getElementById(
+            "turnNumberCenter"
+        );
+
+
+    const phase =
+        document.getElementById(
+            "currentPhase"
+        );
+
+
+    const phaseCenter =
+        document.getElementById(
+            "currentPhaseCenter"
+        );
+
+
+    const message =
+        document.getElementById(
+            "gameMessage"
+        );
+
+
+    const activePlayer =
+        currentGame.players[
+            currentGame.activePlayer
+        ];
+
+
+    const phaseText =
+        formatPhase(
+            currentGame.phase
+        );
+
+
+    if (turn) {
+
+        turn.textContent =
+            currentGame.turn;
+
+    }
+
+
+    if (turnCenter) {
+
+        turnCenter.textContent =
+            currentGame.turn;
+
+    }
+
+
+    if (phase) {
+
+        phase.textContent =
+            phaseText;
+
+    }
+
+
+    if (phaseCenter) {
+
+        phaseCenter.textContent =
+            phaseText;
+
+    }
+
+
+    if (message) {
+
+        message.textContent =
+            `${activePlayer.name}'s turn`;
+
+    }
+
+}
+
+
+// ======================================================
+// CONTROLS
+// ======================================================
+
+function renderGameControls() {
+
+    const mulligan =
+        document.getElementById(
+            "mulliganControls"
+        );
+
+
+    const combat =
+        document.getElementById(
+            "combatControls"
+        );
+
+
+    const controls =
+        document.getElementById(
+            "gameControls"
+        );
+
+
+    // ==============================================
+    // MULLIGAN
+    // ==============================================
+
+    if (
+        currentGame.status ===
+        "mulligan"
+    ) {
+
+        if (mulligan) {
+
+            mulligan.style.display =
+                "block";
+
+        }
+
+
+        if (combat) {
+
+            combat.style.display =
+                "none";
+
+        }
+
+
+        if (controls) {
+
+            controls.style.display =
+                "none";
+
+        }
+
+
+        return;
+
+    }
+
+
+    if (mulligan) {
+
+        mulligan.style.display =
+            "none";
+
+    }
+
+
+    // ==============================================
+    // FINISHED
+    // ==============================================
+
+    if (
+        currentGame.status ===
+        "finished"
+    ) {
+
+        if (combat) {
+
+            combat.style.display =
+                "none";
+
+        }
+
+
+        if (controls) {
+
+            controls.style.display =
+                "none";
+
+        }
+
+
+        renderWinner();
+
+        return;
+
+    }
+
+
+    // ==============================================
+    // NORMAL GAME
+    // ==============================================
+
+    if (controls) {
+
+        controls.style.display =
+            "block";
+
+    }
+
+
+    // ==============================================
+    // COMBAT
+    // ==============================================
+
+    if (
+        currentGame.phase ===
+        "combat"
+    ) {
+
+        if (combat) {
+
+            combat.style.display =
+                "block";
+
+        }
+
+    } else {
+
+        if (combat) {
+
+            combat.style.display =
+                "none";
+
+        }
+
+    }
+
+}
+
+
+// ======================================================
+// WINNER
+// ======================================================
+
+function renderWinner() {
+
+    const message =
+        document.getElementById(
+            "gameMessage"
+        );
+
+
+    if (!message) {
+        return;
+    }
+
+
+    if (
+        currentGame.winner === null
+    ) {
+        return;
+    }
+
+
+    const winner =
+        currentGame.players[
+            currentGame.winner
+        ];
+
+
+    message.textContent =
+        `${winner.name} wins!`;
+
+}
+
+
+// ======================================================
+// GAME LOG
 // ======================================================
 
 function renderGameLog() {
@@ -340,15 +878,22 @@ function renderGameLog() {
         );
 
 
+    if (!container) {
+        return;
+    }
+
+
     container.innerHTML = "";
 
 
     currentGame.log
-        .slice(-20)
+        .slice(-30)
         .forEach(entry => {
 
             const element =
-                document.createElement("p");
+                document.createElement(
+                    "p"
+                );
 
 
             element.textContent =
@@ -369,10 +914,12 @@ function renderGameLog() {
 
 
 // ======================================================
-// PHASE FORMAT
+// FORMAT PHASE
 // ======================================================
 
-function formatPhase(phase) {
+function formatPhase(
+    phase
+) {
 
     const names = {
 
@@ -394,7 +941,10 @@ function formatPhase(phase) {
     };
 
 
-    return names[phase] || phase;
+    return (
+        names[phase] ||
+        phase
+    );
 
 }
 
@@ -403,10 +953,14 @@ function formatPhase(phase) {
 // ESCAPE HTML
 // ======================================================
 
-function escapeHTML(value) {
+function escapeHTML(
+    value
+) {
 
     const div =
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
 
 
     div.textContent =
