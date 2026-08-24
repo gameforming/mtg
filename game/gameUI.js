@@ -128,7 +128,100 @@ function renderPlayers() {
 // ======================================================
 // RENDER HANDS
 // ======================================================
+function renderMana() {
 
+    if (!currentGame) {
+        return;
+    }
+
+
+    const mana =
+        currentGame.players[0].mana;
+
+
+    const elements = {
+
+        white:
+            document.getElementById(
+                "whiteMana"
+            ),
+
+        blue:
+            document.getElementById(
+                "blueMana"
+            ),
+
+        black:
+            document.getElementById(
+                "blackMana"
+            ),
+
+        red:
+            document.getElementById(
+                "redMana"
+            ),
+
+        green:
+            document.getElementById(
+                "greenMana"
+            ),
+
+        colorless:
+            document.getElementById(
+                "colorlessMana"
+            )
+
+    };
+
+
+    if (elements.white) {
+
+        elements.white.textContent =
+            mana.white;
+
+    }
+
+
+    if (elements.blue) {
+
+        elements.blue.textContent =
+            mana.blue;
+
+    }
+
+
+    if (elements.black) {
+
+        elements.black.textContent =
+            mana.black;
+
+    }
+
+
+    if (elements.red) {
+
+        elements.red.textContent =
+            mana.red;
+
+    }
+
+
+    if (elements.green) {
+
+        elements.green.textContent =
+            mana.green;
+
+    }
+
+
+    if (elements.colorless) {
+
+        elements.colorless.textContent =
+            mana.colorless;
+
+    }
+
+}
 function renderHands() {
 
     const player =
