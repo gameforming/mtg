@@ -232,3 +232,203 @@ main {
 
     display: none;
 }
+/* ========================================= */
+/* PLAY SYSTEM */
+/* ========================================= */
+
+.gameModeGrid {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            auto-fit,
+            minmax(220px, 1fr)
+        );
+
+    gap: 15px;
+
+    margin-bottom: 25px;
+
+}
+
+
+.gameMode {
+
+    background: #222;
+
+    border: 1px solid #444;
+
+    border-radius: 10px;
+
+    padding: 20px;
+}
+
+
+.gameMode:hover {
+
+    border-color: #777;
+
+}
+
+
+.selectedMode {
+
+    background: #1c1c1c;
+
+    border: 1px solid #444;
+
+    border-radius: 10px;
+
+    padding: 20px;
+
+    margin-bottom: 30px;
+
+}
+
+
+.requirements {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            auto-fit,
+            minmax(180px, 1fr)
+        );
+
+    gap: 5px 20px;
+
+}
+
+
+.playDeck {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    gap: 20px;
+
+    background: #222;
+
+    border: 1px solid #444;
+
+    border-radius: 10px;
+
+    padding: 15px;
+
+    margin-bottom: 10px;
+
+}
+
+
+.playDeck.suitable {
+
+    border-color: #4caf50;
+
+}
+
+
+.playDeck.unsuitable {
+
+    opacity: 0.55;
+
+}
+
+
+.valid {
+
+    color: #66bb6a;
+
+    display: block;
+
+    margin-bottom: 5px;
+
+}
+
+
+.invalid {
+
+    color: #ef5350;
+
+    display: block;
+
+    max-width: 300px;
+
+}
+
+
+.opponentGrid {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            auto-fit,
+            minmax(220px, 1fr)
+        );
+
+    gap: 15px;
+
+}
+
+
+.opponent {
+
+    background: #222;
+
+    border: 1px solid #444;
+
+    border-radius: 10px;
+
+    padding: 20px;
+
+}
+
+
+.opponent.selected {
+
+    border-color: #4caf50;
+
+}
+
+
+.opponent.disabled {
+
+    opacity: 0.45;
+
+}
+
+
+.opponent span {
+
+    color: #aaa;
+
+}
+
+
+.startGameButton {
+
+    display: block;
+
+    margin: 35px auto;
+
+    padding: 15px 50px;
+
+    font-size: 20px;
+
+    font-weight: bold;
+
+    background: #4caf50;
+
+}
+
+
+.startGameButton:hover {
+
+    background: #66bb6a;
+
+}
