@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>MTG Game</title>
+
+    <link
+        rel="stylesheet"
+        href="../style.css"
+    >
+
+</head>
+
+<body>
+
+<header>
+
+    <h1>MTG Game</h1>
+
+</header>
+
+
+<main id="game">
+
+    <!-- ========================================== -->
+    <!-- OPPONENT -->
+    <!-- ========================================== -->
+
+    <section class="playerArea opponentArea">
+
+        <div>
+
+            <h2 id="opponentName">
+                AI
+            </h2>
+
+            <p>
+                Life:
+                <strong id="opponentLife">
+                    20
+                </strong>
+            </p>
+
+        </div>
+
+
+        <div
+            id="opponentHand"
+            class="hand hiddenCards"
+        ></div>
+
+
+        <div
+            id="opponentBattlefield"
+            class="battlefield"
+        ></div>
+
+    </section>
+
+
+    <!-- ========================================== -->
+    <!-- GAME INFORMATION -->
+    <!-- ========================================== -->
+
+    <section class="gameCenter">
+
+        <div>
+
+            Turn:
+            <strong id="turnNumber">
+                1
+            </strong>
+
+        </div>
+
+
+        <div>
+
+            Phase:
+            <strong id="currentPhase">
+                Beginning
+            </strong>
+
+        </div>
+
+
+        <div
+            id="gameMessage"
+        >
+        </div>
+
+    </section>
+
+
+    <!-- ========================================== -->
+    <!-- PLAYER -->
+    <!-- ========================================== -->
+
+    <section class="playerArea playerAreaBottom">
+
+        <div
+            id="playerBattlefield"
+            class="battlefield"
+        ></div>
+
+
+        <div>
+
+            <h2 id="playerName">
+                You
+            </h2>
+
+            <p>
+                Life:
+                <strong id="playerLife">
+                    20
+                </strong>
+            </p>
+
+        </div>
+
+
+        <div
+            id="playerHand"
+            class="hand"
+        ></div>
+
+    </section>
+
+
+    <!-- ========================================== -->
+    <!-- CONTROLS -->
+    <!-- ========================================== -->
+
+    <section class="gameControls">
+
+        <button
+            onclick="nextPhase()"
+        >
+            Next Phase
+        </button>
+
+
+        <button
+            onclick="endTurn()"
+        >
+            End Turn
+        </button>
+
+    </section>
+
+
+    <!-- ========================================== -->
+    <!-- LOG -->
+    <!-- ========================================== -->
+
+    <section class="gameLog">
+
+        <h3>
+            Game Log
+        </h3>
+
+        <div
+            id="gameLog"
+        ></div>
+
+    </section>
+
+</main>
+
+
+<script src="gameState.js"></script>
+<script src="gameEngine.js"></script>
+<script src="gameUI.js"></script>
+
+</body>
+
+</html>
