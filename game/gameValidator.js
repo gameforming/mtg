@@ -1,6 +1,45 @@
+// ======================================================
+// DECK VALIDATOR
+// ======================================================
+
+
 function validateDeck(deck, mode) {
 
     const errors = [];
+
+    if (!deck) {
+
+        return {
+
+            valid: false,
+
+            errors: [
+                "No deck selected."
+            ]
+
+        };
+
+    }
+
+
+    if (!mode) {
+
+        return {
+
+            valid: false,
+
+            errors: [
+                "No game mode selected."
+            ]
+
+        };
+
+    }
+
+
+    // ==================================================
+    // COUNT CARDS
+    // ==================================================
 
     const totalCards =
         deck.cards.reduce(
@@ -10,17 +49,25 @@ function validateDeck(deck, mode) {
         );
 
 
+    // ==================================================
+    // MINIMUM
+    // ==================================================
+
     if (
         totalCards <
         mode.deck.minimumCards
     ) {
 
         errors.push(
-            `Deck needs at least ${mode.deck.minimumCards} cards.`
+            `Needs at least ${mode.deck.minimumCards} cards.`
         );
 
     }
 
+
+    // ==================================================
+    // MAXIMUM
+    // ==================================================
 
     if (
         mode.deck.maximumCards !== null &&
@@ -29,33 +76,90 @@ function validateDeck(deck, mode) {
     ) {
 
         errors.push(
-            `Deck cannot contain more than ${mode.deck.maximumCards} cards.`
+            `Cannot contain more than ${mode.deck.maximumCards} cards.`
         );
 
     }
 
 
-    for (const card of deck.cards) {
+    // ==================================================
+    // COPY LIMIT
+    // ==================================================
 
-        if (
-            card.amount >
-            mode.deck.maxCopies
-        ) {
+    if (
+        mode.deck.maxCopies !== null
+    ) {
 
-            errors.push(
-                `${card.name}: too many copies.`
-            );
+        deck.cards.forEach(card => {
 
-        }
+            if (
+                card.amount >
+                mode.deck.maxCopies
+            ) {
+
+                errors.push(
+                    `${card.name}: maximum ${mode.deck.maxCopies} copies.`
+                );
+
+            }
+
+        });
+
+    }
+
+
+    // ==================================================
+    // RESULT
+    // ==================================================
+
+    return {
+
+        valid:
+            errors.length === 0,
+
+        errors,
+
+        totalCards
+
+    };
+
+}
+
+
+// ======================================================
+// GET DECK STATUS
+// ======================================================
+
+function getDeckStatus(
+    deck,
+    mode
+) {
+
+    const result =
+        validateDeck(
+            deck,
+            mode
+        );
+
+
+    if (result.valid) {
+
+        return {
+
+            valid: true,
+
+            text: "Suitable"
+
+        };
 
     }
 
 
     return {
 
-        valid: errors.length === 0,
+        valid: false,
 
-        errors
+        text: result.errors[0]
 
     };
 
