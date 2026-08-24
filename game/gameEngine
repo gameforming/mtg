@@ -1,19 +1,5 @@
 // ======================================================
-// GAME ENGINE
-// ======================================================
-//
-// De GameEngine verandert de GameState.
-//
-// UI roept functies hier aan.
-// AI gaat hier later ook functies aanroepen.
-// Multiplayer gaat hier later ook functies aanroepen.
-//
-// UI -> Engine -> GameState
-// ======================================================
-
-
-// ======================================================
-// CURRENT GAME
+// MTG GAME ENGINE
 // ======================================================
 
 let currentGame = null;
@@ -23,15 +9,11 @@ let currentGame = null;
 // START GAME
 // ======================================================
 
-function startGameEngine(
+async function startGameEngine(
     mode,
     playerDeck,
     opponentDeck
 ) {
-
-    // ----------------------------------------------
-    // Maak kopieën van de decks
-    // ----------------------------------------------
 
     const playerLibrary =
         prepareDeck(playerDeck);
@@ -40,48 +22,21 @@ function startGameEngine(
         prepareDeck(opponentDeck);
 
 
-    // ----------------------------------------------
-    // Maak GameState
-    // ----------------------------------------------
-
-    currentGame =
-        createGameState(
-            mode,
-            playerLibrary,
-            opponentLibrary
-        );
-
-
-    // ----------------------------------------------
-    // Shuffle
-    // ----------------------------------------------
-
-    shuffle(
-        currentGame.players[0].library
-    );
-
-    shuffle(
-        currentGame.players[1].library
+    currentGame = createGameState(
+        mode,
+        playerLibrary,
+        opponentLibrary
     );
 
 
-    // ----------------------------------------------
-    // Begin wedstrijd
-    // ----------------------------------------------
-
-    currentGame.status =
-        "mulligan";
+    shuffle(currentGame.players[0].library);
+    shuffle(currentGame.players[1].library);
 
 
-    logGame(
-        "Game started."
-    );
+    logGame("Game started.");
 
 
-    // ----------------------------------------------
-    // Draw opening hands
-    // ----------------------------------------------
-
+    // Opening hands
     drawCards(
         0,
         mode.rules.startingHand
@@ -93,21 +48,10 @@ function startGameEngine(
     );
 
 
-    logGame(
-        "Both players drew their opening hands."
-    );
+    currentGame.status = "mulligan";
 
-
-    // ----------------------------------------------
-    // Show game
-    // ----------------------------------------------
 
     openGamePage();
-
-    renderGame();
-
-
-    return currentGame;
 
 }
 
@@ -137,13 +81,35 @@ function prepareDeck(deck) {
 
                 image: card.image,
 
-                // Unique instance ID
                 instanceId:
                     crypto.randomUUID(),
 
                 tapped: false,
 
-                summoningSickness: false
+                summoningSickness: true,
+
+                attacking: false,
+
+                blocking: false,
+
+                damage: 0,
+
+                // Filled by card data later
+                typeLine: "",
+
+                oracleText: "",
+
+                manaCost: "",
+
+                power: null,
+
+                toughness: null,
+
+                colors: [],
+
+                types: [],
+
+                subtypes: []
 
             });
 
@@ -192,33 +158,7 @@ function shuffle(array) {
 
 
 // ======================================================
-// DRAW CARDS
-// ======================================================
-
-function drawCards(
-    playerId,
-    amount
-) {
-
-    const player =
-        currentGame.players[playerId];
-
-
-    for (
-        let i = 0;
-        i < amount;
-        i++
-    ) {
-
-        drawCard(playerId);
-
-    }
-
-}
-
-
-// ======================================================
-// DRAW ONE CARD
+// DRAW
 // ======================================================
 
 function drawCard(playerId) {
@@ -227,15 +167,11 @@ function drawCard(playerId) {
         currentGame.players[playerId];
 
 
-    if (
-        player.library.length === 0
-    ) {
+    if (player.library.length === 0) {
 
-        // Later:
-        // player loses because library is empty.
-
-        logGame(
-            `${player.name} has no cards left in their library.`
+        loseGame(
+            playerId,
+            "You tried to draw from an empty library."
         );
 
         return null;
@@ -251,7 +187,7 @@ function drawCard(playerId) {
 
 
     logGame(
-        `${player.name} drew a card.`
+        `${player.name} drew ${card.name}.`
     );
 
 
@@ -260,48 +196,32 @@ function drawCard(playerId) {
 }
 
 
-// ======================================================
-// MULLIGAN
-// ======================================================
+function drawCards(
+    playerId,
+    amount
+) {
 
-function keepOpeningHand(playerId) {
-
-    if (
-        currentGame.status !== "mulligan"
+    for (
+        let i = 0;
+        i < amount;
+        i++
     ) {
 
-        return;
+        if (
+            currentGame.status === "finished"
+        ) {
+            return;
+        }
+
+        drawCard(playerId);
 
     }
-
-
-    if (
-        currentGame.mulligan.playersReady
-            .includes(playerId)
-    ) {
-
-        return;
-
-    }
-
-
-    currentGame.mulligan.playersReady.push(
-        playerId
-    );
-
-
-    logGame(
-        `${currentGame.players[playerId].name} kept their hand.`
-    );
-
-
-    checkMulliganFinished();
 
 }
 
 
 // ======================================================
-// MULLIGAN AGAIN
+// MULLIGAN
 // ======================================================
 
 function mulliganOpeningHand(playerId) {
@@ -309,17 +229,13 @@ function mulliganOpeningHand(playerId) {
     if (
         currentGame.status !== "mulligan"
     ) {
-
         return;
-
     }
 
 
     const player =
         currentGame.players[playerId];
 
-
-    // Put hand back into library
 
     player.library.push(
         ...player.hand
@@ -329,14 +245,10 @@ function mulliganOpeningHand(playerId) {
     player.hand = [];
 
 
-    // Shuffle
-
     shuffle(
         player.library
     );
 
-
-    // Draw new hand
 
     drawCards(
         playerId,
@@ -344,12 +256,40 @@ function mulliganOpeningHand(playerId) {
     );
 
 
-    logGame(
-        `${player.name} took a mulligan.`
-    );
+    player.mulligans++;
 
 
     renderGame();
+
+}
+
+
+// ======================================================
+// KEEP HAND
+// ======================================================
+
+function keepOpeningHand(playerId) {
+
+    if (
+        currentGame.status !== "mulligan"
+    ) {
+        return;
+    }
+
+
+    const player =
+        currentGame.players[playerId];
+
+
+    if (player.handKept) {
+        return;
+    }
+
+
+    player.handKept = true;
+
+
+    checkMulliganFinished();
 
 }
 
@@ -360,10 +300,13 @@ function mulliganOpeningHand(playerId) {
 
 function checkMulliganFinished() {
 
-    if (
-        currentGame.mulligan.playersReady.length
-        < currentGame.players.length
-    ) {
+    const ready =
+        currentGame.players.every(
+            player => player.handKept
+        );
+
+
+    if (!ready) {
 
         renderGame();
 
@@ -383,47 +326,35 @@ function checkMulliganFinished() {
 
 function startFirstTurn() {
 
-    currentGame.status =
-        "playing";
-
+    currentGame.status = "playing";
 
     currentGame.turn = 1;
 
-
     currentGame.activePlayer = 0;
 
+    currentGame.firstTurn = true;
 
-    currentGame.priorityPlayer = 0;
+    currentGame.phase = "beginning";
 
-
-    currentGame.phase =
-        "beginning";
-
-
-    currentGame.step =
-        "untap";
+    currentGame.step = "untap";
 
 
-    logGame(
-        "Turn 1 begins."
-    );
+    logGame("The game begins.");
 
-
-    executeCurrentStep();
-
-
-    renderGame();
+    beginTurn();
 
 }
 
 
 // ======================================================
-// EXECUTE CURRENT STEP
+// BEGIN TURN
 // ======================================================
 
-function executeCurrentStep() {
+function beginTurn() {
 
-    if (!currentGame) {
+    if (
+        currentGame.status === "finished"
+    ) {
         return;
     }
 
@@ -434,158 +365,65 @@ function executeCurrentStep() {
         ];
 
 
-    // ==================================================
-    // BEGINNING PHASE
-    // ==================================================
+    currentGame.phase = "beginning";
 
+
+    // Untap
+    untapPlayer(player.id);
+
+
+    // Remove summoning sickness
+    player.battlefield.forEach(card => {
+
+        card.summoningSickness = false;
+
+    });
+
+
+    // Mana resets
+    player.mana.available = 0;
+
+    player.mana.maximum = 0;
+
+
+    // Upkeep
+    currentGame.step = "upkeep";
+
+
+    logGame(
+        `Turn ${currentGame.turn}: ${player.name}'s upkeep.`
+    );
+
+
+    // Draw
+    currentGame.step = "draw";
+
+
+    // First player does not draw turn 1
     if (
-        currentGame.phase === "beginning"
+        !(currentGame.turn === 1 &&
+          player.id === 0)
     ) {
 
-        if (
-            currentGame.step === "untap"
-        ) {
-
-            untapPlayer(
-                player.id
-            );
-
-
-            currentGame.step =
-                "upkeep";
-
-
-            return;
-
-        }
-
-
-        if (
-            currentGame.step === "upkeep"
-        ) {
-
-            currentGame.step =
-                "draw";
-
-
-            return;
-
-        }
-
-
-        if (
-            currentGame.step === "draw"
-        ) {
-
-            // First player normally doesn't draw
-            // on their first turn in real MTG.
-            //
-            // We handle that later with a proper
-            // first-turn rule.
-
-            if (
-                currentGame.turn > 1 ||
-                player.id !== 0
-            ) {
-
-                drawCard(
-                    player.id
-                );
-
-            }
-
-
-            currentGame.phase =
-                "main1";
-
-
-            currentGame.step =
-                "main";
-
-
-            return;
-
-        }
+        drawCard(player.id);
 
     }
 
 
-    // ==================================================
-    // MAIN PHASE
-    // ==================================================
+    currentGame.phase = "main1";
 
+    currentGame.step = "main";
+
+
+    renderGame();
+
+
+    // AI
     if (
-        currentGame.phase === "main1"
+        player.id === 1
     ) {
 
-        currentGame.step =
-            "main";
-
-        return;
-
-    }
-
-
-    // ==================================================
-    // COMBAT
-    // ==================================================
-
-    if (
-        currentGame.phase === "combat"
-    ) {
-
-        currentGame.step =
-            "beginning";
-
-        return;
-
-    }
-
-
-    // ==================================================
-    // SECOND MAIN
-    // ==================================================
-
-    if (
-        currentGame.phase === "main2"
-    ) {
-
-        currentGame.step =
-            "main";
-
-        return;
-
-    }
-
-
-    // ==================================================
-    // ENDING
-    // ==================================================
-
-    if (
-        currentGame.phase === "ending"
-    ) {
-
-        if (
-            currentGame.step === "end"
-        ) {
-
-            currentGame.step =
-                "cleanup";
-
-
-            return;
-
-        }
-
-
-        if (
-            currentGame.step === "cleanup"
-        ) {
-
-            endTurn();
-
-        }
+        runAI();
 
     }
 
@@ -606,12 +444,68 @@ function untapPlayer(playerId) {
 
         card.tapped = false;
 
+        card.attacking = false;
+
+        card.blocking = false;
+
+        card.damage = 0;
+
     });
 
 
     logGame(
         `${player.name} untapped their permanents.`
     );
+
+}
+
+
+// ======================================================
+// END TURN
+// ======================================================
+
+function endTurn() {
+
+    if (
+        currentGame.status !== "playing"
+    ) {
+        return;
+    }
+
+
+    const player =
+        currentGame.players[
+            currentGame.activePlayer
+        ];
+
+
+    player.battlefield.forEach(card => {
+
+        card.attacking = false;
+
+        card.blocking = false;
+
+        card.damage = 0;
+
+    });
+
+
+    currentGame.activePlayer =
+        currentGame.activePlayer === 0
+            ? 1
+            : 0;
+
+
+    currentGame.turn++;
+
+
+    logGame(
+        `Turn ${currentGame.turn}: ` +
+        `${currentGame.players[currentGame.activePlayer].name}'s turn.`
+    );
+
+
+    beginTurn();
 
 }
 
@@ -625,9 +519,14 @@ function nextPhase() {
     if (
         currentGame.status !== "playing"
     ) {
-
         return;
+    }
 
+
+    if (
+        currentGame.activePlayer !== 0
+    ) {
+        return;
     }
 
 
@@ -635,46 +534,35 @@ function nextPhase() {
         currentGame.phase
     ) {
 
-        case "beginning":
-
-            currentGame.phase =
-                "main1";
-
-            currentGame.step =
-                "main";
-
-            break;
-
-
         case "main1":
 
-            currentGame.phase =
-                "combat";
+            currentGame.phase = "combat";
 
-            currentGame.step =
-                "beginning";
+            currentGame.step = "beginning";
+
+            startCombat();
 
             break;
 
 
         case "combat":
 
-            currentGame.phase =
-                "main2";
+            currentGame.phase = "main2";
 
-            currentGame.step =
-                "main";
+            currentGame.step = "main";
+
+            renderGame();
 
             break;
 
 
         case "main2":
 
-            currentGame.phase =
-                "ending";
+            currentGame.phase = "ending";
 
-            currentGame.step =
-                "end";
+            currentGame.step = "end";
+
+            renderGame();
 
             break;
 
@@ -683,13 +571,148 @@ function nextPhase() {
 
             endTurn();
 
-            return;
+            break;
+
+    }
+
+}
+
+
+// ======================================================
+// COMBAT
+// ======================================================
+
+function startCombat() {
+
+    logGame("Combat begins.");
+
+    currentGame.combat = {
+
+        attackers: [],
+
+        blockers: [],
+
+        damageAssigned: false
+
+    };
+
+
+    renderGame();
+
+}
+
+
+// ======================================================
+// DECLARE ATTACKERS
+// ======================================================
+
+function toggleAttack(cardInstanceId) {
+
+    if (
+        currentGame.status !== "playing"
+    ) {
+        return;
+    }
+
+
+    if (
+        currentGame.activePlayer !== 0
+    ) {
+        return;
+    }
+
+
+    if (
+        currentGame.phase !== "combat"
+    ) {
+        return;
+    }
+
+
+    const player =
+        currentGame.players[0];
+
+
+    const card =
+        player.battlefield.find(
+            card =>
+                card.instanceId ===
+                cardInstanceId
+        );
+
+
+    if (!card) {
+        return;
+    }
+
+
+    if (
+        card.tapped ||
+        card.summoningSickness
+    ) {
+        return;
+    }
+
+
+    card.attacking =
+        !card.attacking;
+
+
+    if (card.attacking) {
+
+        currentGame.combat.attackers.push(
+            card.instanceId
+        );
+
+    } else {
+
+        currentGame.combat.attackers =
+            currentGame.combat.attackers.filter(
+                id =>
+                    id !== card.instanceId
+            );
 
     }
 
 
-    currentGame.priorityPlayer =
-        currentGame.activePlayer;
+    renderGame();
+
+}
+
+
+// ======================================================
+// DECLARE BLOCKER
+// ======================================================
+
+function toggleBlock(
+    blockerId,
+    attackerId
+) {
+
+    const opponent =
+        currentGame.players[1];
+
+
+    const blocker =
+        opponent.battlefield.find(
+            card =>
+                card.instanceId === blockerId
+        );
+
+
+    if (!blocker) {
+        return;
+    }
+
+
+    blocker.blocking =
+        !blocker.blocking;
+
+
+    blocker.blockingTarget =
+        blocker.blocking
+            ? attackerId
+            : null;
 
 
     renderGame();
@@ -698,38 +721,473 @@ function nextPhase() {
 
 
 // ======================================================
-// END TURN
+// RESOLVE COMBAT
 // ======================================================
 
-function endTurn() {
+function resolveCombat() {
 
-    currentGame.activePlayer =
-        currentGame.activePlayer === 0
+    const attackers =
+        currentGame.players[0]
+            .battlefield
+            .filter(card =>
+                card.attacking
+            );
+
+
+    const opponent =
+        currentGame.players[1];
+
+
+    for (const attacker of attackers) {
+
+        attacker.tapped = true;
+
+
+        const blocker =
+            opponent.battlefield.find(
+                card =>
+                    card.blockingTarget ===
+                    attacker.instanceId
+            );
+
+
+        if (!blocker) {
+
+            dealDamage(
+                1,
+                attacker.power || 0
+            );
+
+            continue;
+
+        }
+
+
+        const attackerPower =
+            Number(attacker.power) || 0;
+
+
+        const blockerPower =
+            Number(blocker.power) || 0;
+
+
+        attacker.damage += blockerPower;
+
+        blocker.damage += attackerPower;
+
+
+        checkCreatureDeath(
+            0
+        );
+
+        checkCreatureDeath(
+            1
+        );
+
+    }
+
+
+    currentGame.combat.attackers = [];
+
+
+    renderGame();
+
+}
+
+
+// ======================================================
+// DAMAGE TO PLAYER
+// ======================================================
+
+function dealDamage(
+    playerId,
+    amount
+) {
+
+    const player =
+        currentGame.players[playerId];
+
+
+    player.life -= amount;
+
+
+    logGame(
+        `${player.name} took ${amount} damage.`
+    );
+
+
+    if (
+        player.life <= 0
+    ) {
+
+        loseGame(
+            playerId,
+            "Life reached zero."
+        );
+
+    }
+
+}
+
+
+// ======================================================
+// CREATURE DEATH
+// ======================================================
+
+function checkCreatureDeath(playerId) {
+
+    const player =
+        currentGame.players[playerId];
+
+
+    const dead =
+        player.battlefield.filter(card => {
+
+            if (
+                card.toughness === null
+            ) {
+                return false;
+            }
+
+
+            return (
+                card.damage >=
+                Number(card.toughness)
+            );
+
+        });
+
+
+    dead.forEach(card => {
+
+        player.battlefield =
+            player.battlefield.filter(
+                c =>
+                    c.instanceId !==
+                    card.instanceId
+            );
+
+
+        player.graveyard.push(card);
+
+
+        logGame(
+            `${card.name} was destroyed.`
+        );
+
+    });
+
+}
+
+
+// ======================================================
+// PLAY LAND
+// ======================================================
+
+function playLand(
+    playerId,
+    cardInstanceId
+) {
+
+    const player =
+        currentGame.players[playerId];
+
+
+    if (
+        playerId !==
+        currentGame.activePlayer
+    ) {
+        return false;
+    }
+
+
+    if (
+        currentGame.phase !== "main1" &&
+        currentGame.phase !== "main2"
+    ) {
+        return false;
+    }
+
+
+    if (
+        player.landsPlayed >= 1
+    ) {
+        return false;
+    }
+
+
+    const index =
+        player.hand.findIndex(
+            card =>
+                card.instanceId ===
+                cardInstanceId
+        );
+
+
+    if (index === -1) {
+        return false;
+    }
+
+
+    const card =
+        player.hand[index];
+
+
+    if (
+        !isLand(card)
+    ) {
+        return false;
+    }
+
+
+    player.hand.splice(
+        index,
+        1
+    );
+
+
+    player.battlefield.push(card);
+
+
+    player.landsPlayed++;
+
+
+    logGame(
+        `${player.name} played ${card.name}.`
+    );
+
+
+    renderGame();
+
+
+    return true;
+
+}
+
+
+// ======================================================
+// TAP LAND FOR MANA
+// ======================================================
+
+function tapLand(
+    playerId,
+    cardInstanceId
+) {
+
+    const player =
+        currentGame.players[playerId];
+
+
+    const card =
+        player.battlefield.find(
+            card =>
+                card.instanceId ===
+                cardInstanceId
+        );
+
+
+    if (!card) {
+        return;
+    }
+
+
+    if (!isLand(card)) {
+        return;
+    }
+
+
+    if (card.tapped) {
+        return;
+    }
+
+
+    card.tapped = true;
+
+
+    player.mana.available++;
+
+
+    logGame(
+        `${player.name} generated 1 mana.`
+    );
+
+
+    renderGame();
+
+}
+
+
+// ======================================================
+// CAST CARD
+// ======================================================
+
+function castCard(
+    playerId,
+    cardInstanceId
+) {
+
+    const player =
+        currentGame.players[playerId];
+
+
+    const index =
+        player.hand.findIndex(
+            card =>
+                card.instanceId ===
+                cardInstanceId
+        );
+
+
+    if (index === -1) {
+        return false;
+    }
+
+
+    const card =
+        player.hand[index];
+
+
+    if (isLand(card)) {
+
+        return false;
+
+    }
+
+
+    const cost =
+        getManaCost(card);
+
+
+    if (
+        player.mana.available <
+        cost
+    ) {
+
+        logGame(
+            `Not enough mana for ${card.name}.`
+        );
+
+        return false;
+
+    }
+
+
+    player.mana.available -= cost;
+
+
+    player.hand.splice(
+        index,
+        1
+    );
+
+
+    // Creature
+    if (
+        isCreature(card)
+    ) {
+
+        card.summoningSickness = true;
+
+        player.battlefield.push(card);
+
+
+        logGame(
+            `${player.name} cast ${card.name}.`
+        );
+
+
+        return true;
+
+    }
+
+
+    // Instant / Sorcery
+    if (
+        isInstant(card) ||
+        isSorcery(card)
+    ) {
+
+        resolveSpell(
+            playerId,
+            card
+        );
+
+        return true;
+
+    }
+
+
+    return false;
+
+}
+
+
+// ======================================================
+// SPELL RESOLUTION
+// ======================================================
+
+function resolveSpell(
+    playerId,
+    card
+) {
+
+    const opponentId =
+        playerId === 0
             ? 1
             : 0;
 
 
-    currentGame.turn++;
+    // Basic damage spell detection
+    const text =
+        (
+            card.oracleText ||
+            ""
+        ).toLowerCase();
 
 
-    currentGame.phase =
-        "beginning";
+    const damageMatch =
+        text.match(
+            /deals?\s+(\d+)\s+damage/
+        );
 
 
-    currentGame.step =
-        "untap";
+    if (damageMatch) {
+
+        const amount =
+            Number(
+                damageMatch[1]
+            );
 
 
-    currentGame.priorityPlayer =
-        currentGame.activePlayer;
+        dealDamage(
+            opponentId,
+            amount
+        );
+
+    }
+
+
+    // Basic draw detection
+    if (
+        text.includes("draw a card")
+    ) {
+
+        drawCard(
+            playerId
+        );
+
+    }
+
+
+    // Spell goes to graveyard
+    currentGame.players[playerId]
+        .graveyard
+        .push(card);
 
 
     logGame(
-        `Turn ${currentGame.turn} begins.`
+        `${card.name} resolved.`
     );
-
-
-    executeCurrentStep();
 
 
     renderGame();
@@ -738,7 +1196,168 @@ function endTurn() {
 
 
 // ======================================================
-// LOG
+// CARD TYPES
+// ======================================================
+
+function isLand(card) {
+
+    return card.types.includes(
+        "Land"
+    );
+
+}
+
+
+function isCreature(card) {
+
+    return card.types.includes(
+        "Creature"
+    );
+
+}
+
+
+function isInstant(card) {
+
+    return card.types.includes(
+        "Instant"
+    );
+
+}
+
+
+function isSorcery(card) {
+
+    return card.types.includes(
+        "Sorcery"
+    );
+
+}
+
+
+// ======================================================
+// MANA COST
+// ======================================================
+
+function getManaCost(card) {
+
+    if (!card.manaCost) {
+        return 0;
+    }
+
+
+    const matches =
+        card.manaCost.match(
+            /\{(\d+)\}/g
+        );
+
+
+    let cost = 0;
+
+
+    if (matches) {
+
+        matches.forEach(value => {
+
+            cost +=
+                Number(
+                    value.replace(
+                        /[{}]/g,
+                        ""
+                    )
+                );
+
+        });
+
+    }
+
+
+    // Colored mana currently counts
+    // as one generic mana each.
+    //
+    // We will replace this with a real
+    // colored mana system next.
+
+    const colored =
+        card.manaCost.match(
+            /\{[WUBRGC]\}/g
+        );
+
+
+    if (colored) {
+
+        cost +=
+            colored.length;
+
+    }
+
+
+    return cost;
+
+}
+
+
+// ======================================================
+// WIN / LOSE
+// ======================================================
+
+function loseGame(
+    playerId,
+    reason
+) {
+
+    if (
+        currentGame.status === "finished"
+    ) {
+        return;
+    }
+
+
+    const player =
+        currentGame.players[playerId];
+
+
+    player.hasLost = true;
+
+
+    const winnerId =
+        playerId === 0
+            ? 1
+            : 0;
+
+
+    const winner =
+        currentGame.players[winnerId];
+
+
+    winner.hasWon = true;
+
+
+    currentGame.winner =
+        winnerId;
+
+
+    currentGame.status =
+        "finished";
+
+
+    logGame(
+        `${player.name} lost: ${reason}`
+    );
+
+
+    logGame(
+        `${winner.name} wins!`
+    );
+
+
+    renderGame();
+
+}
+
+
+// ======================================================
+// GAME LOG
 // ======================================================
 
 function logGame(message) {
@@ -754,56 +1373,24 @@ function logGame(message) {
             currentGame.turn,
 
         message:
-
             message,
 
         timestamp:
-
             Date.now()
 
     });
 
-
-    console.log(
-        `[GAME] ${message}`
-    );
-
 }
 
 
 // ======================================================
-// GET CURRENT PLAYER
+// CURRENT PLAYER
 // ======================================================
 
 function getCurrentPlayer() {
 
-    if (!currentGame) {
-        return null;
-    }
-
-
     return currentGame.players[
         currentGame.activePlayer
-    ];
-
-}
-
-
-// ======================================================
-// GET OPPONENT
-// ======================================================
-
-function getOpponent() {
-
-    if (!currentGame) {
-        return null;
-    }
-
-
-    return currentGame.players[
-        currentGame.activePlayer === 0
-            ? 1
-            : 0
     ];
 
 }
