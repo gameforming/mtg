@@ -432,3 +432,229 @@ main {
     background: #66bb6a;
 
 }
+/* ====================================================== */
+/* GAME */
+/* ====================================================== */
+
+#game {
+
+    max-width: 1600px;
+
+    margin: auto;
+
+    padding: 20px;
+
+}
+
+
+/* ====================================================== */
+/* PLAYER AREAS */
+/* ====================================================== */
+
+.playerArea {
+
+    background: #1c1c1c;
+
+    border: 1px solid #444;
+
+    border-radius: 10px;
+
+    padding: 20px;
+
+    min-height: 300px;
+
+}
+
+
+.opponentArea {
+
+    transform: rotate(180deg);
+
+}
+
+
+.opponentArea > * {
+
+    transform: rotate(180deg);
+
+}
+
+
+.playerAreaBottom {
+
+    min-height: 350px;
+
+}
+
+
+/* ====================================================== */
+/* BATTLEFIELD */
+/* ====================================================== */
+
+.battlefield {
+
+    min-height: 180px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 12px;
+
+    flex-wrap: wrap;
+
+}
+
+
+/* ====================================================== */
+/* HAND */
+/* ====================================================== */
+
+.hand {
+
+    display: flex;
+
+    justify-content: center;
+
+    align-items: flex-end;
+
+    gap: 8px;
+
+    min-height: 180px;
+
+    overflow-x: auto;
+
+}
+
+
+/* ====================================================== */
+/* GAME CARD */
+/* ====================================================== */
+
+.gameCard {
+
+    width: 120px;
+
+    flex-shrink: 0;
+
+}
+
+
+.gameCard img {
+
+    width: 100%;
+
+    display: block;
+
+    border-radius: 7px;
+
+}
+
+
+/* ====================================================== */
+/* CARD BACK */
+/* ====================================================== */
+
+.cardBack {
+
+    width: 100px;
+
+    height: 140px;
+
+    background: #333;
+
+    border: 2px solid #777;
+
+    border-radius: 8px;
+
+    display: flex;
+
+    justify-content: center;
+
+    align-items: center;
+
+    font-weight: bold;
+
+}
+
+
+/* ====================================================== */
+/* GAME CENTER */
+/* ====================================================== */
+
+.gameCenter {
+
+    text-align: center;
+
+    background: #222;
+
+    padding: 15px;
+
+    border-top: 1px solid #444;
+
+    border-bottom: 1px solid #444;
+
+}
+
+
+/* ====================================================== */
+/* CONTROLS */
+/* ====================================================== */
+
+.gameControls {
+
+    text-align: center;
+
+    padding: 20px;
+
+}
+
+
+.gameControls button {
+
+    padding: 14px 25px;
+
+    font-size: 16px;
+
+}
+
+
+/* ====================================================== */
+/* GAME LOG */
+/* ====================================================== */
+
+.gameLog {
+
+    max-width: 700px;
+
+    margin: 20px auto;
+
+    background: #1a1a1a;
+
+    border: 1px solid #333;
+
+    border-radius: 8px;
+
+    padding: 15px;
+
+}
+
+
+#gameLog {
+
+    max-height: 180px;
+
+    overflow-y: auto;
+
+}
+
+
+#gameLog p {
+
+    margin: 5px 0;
+
+    color: #bbb;
+
+}
