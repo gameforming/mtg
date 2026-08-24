@@ -611,7 +611,7 @@ function startGame() {
     if (!validation.valid) {
 
         alert(
-            "This deck is no longer valid."
+            validation.errors.join("\n")
         );
 
         return;
@@ -619,25 +619,29 @@ function startGame() {
     }
 
 
-    // ----------------------------------------------
-    // FOR NOW
-    // ----------------------------------------------
-
-    alert(
-
-        `Starting ${selectedGameMode.name} ` +
-        `with ${deck.name} ` +
-        `against ${selectedOpponent}.`
-
-    );
-
-
-    // Later:
+    // ==================================================
+    // AI DECK
+    // ==================================================
     //
-    // startGameEngine({
-    //     mode: selectedGameMode,
-    //     deck: deck,
-    //     opponent: selectedOpponent
-    // });
+    // Voor nu gebruikt de AI hetzelfde deck.
+    // Later krijgt de AI zijn eigen deck-building/
+    // deck-selection systeem.
+    // ==================================================
+
+    const opponentDeck =
+        JSON.parse(
+            JSON.stringify(deck)
+        );
+
+
+    // ==================================================
+    // START ENGINE
+    // ==================================================
+
+    startGameEngine(
+        selectedGameMode,
+        deck,
+        opponentDeck
+    );
 
 }
