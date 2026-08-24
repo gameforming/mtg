@@ -22,329 +22,298 @@
 
 <body>
 
-    <!-- ================================================== -->
-    <!-- HEADER -->
-    <!-- ================================================== -->
+<header class="gameHeader">
 
-    <header class="gameHeader">
+    <h1>Magic: The Gathering</h1>
 
-        <h1>Magic: The Gathering</h1>
+    <div>
 
-        <div class="gameHeaderInfo">
+        Turn:
+        <strong id="turnNumber">
+            1
+        </strong>
+
+        |
+
+        Phase:
+        <strong id="currentPhase">
+            Beginning
+        </strong>
+
+    </div>
+
+</header>
+
+
+<main id="game">
+
+
+    <!-- ================================================= -->
+    <!-- OPPONENT -->
+    <!-- ================================================= -->
+
+    <section class="playerArea opponentArea">
+
+        <div class="playerInfo">
+
+            <h2 id="opponentName">
+                AI
+            </h2>
+
+            <div>
+
+                ❤️
+
+                <strong id="opponentLife">
+                    20
+                </strong>
+
+            </div>
+
+        </div>
+
+
+        <h3>
+            Opponent Hand
+        </h3>
+
+        <div
+            id="opponentHand"
+            class="hand hiddenCards"
+        ></div>
+
+
+        <h3>
+            Battlefield
+        </h3>
+
+        <div
+            id="opponentBattlefield"
+            class="battlefield"
+        ></div>
+
+    </section>
+
+
+    <!-- ================================================= -->
+    <!-- CENTER -->
+    <!-- ================================================= -->
+
+    <section class="gameCenter">
+
+        <div class="gameStatus">
+
+            <div>
+
+                Turn
+
+                <strong
+                    id="turnNumberCenter"
+                >
+                    1
+                </strong>
+
+            </div>
+
+
+            <div>
+
+                Phase
+
+                <strong
+                    id="currentPhaseCenter"
+                >
+                    Beginning
+                </strong>
+
+            </div>
+
+
+            <div>
+
+                <strong
+                    id="gameMessage"
+                >
+                    You
+                </strong>
+
+                turn
+
+            </div>
+
+        </div>
+
+
+        <!-- MANA -->
+
+        <div
+            id="manaDisplay"
+            class="manaDisplay"
+        >
 
             <span>
-                Turn:
-                <strong id="turnNumber">1</strong>
+                ⚪ <strong id="whiteMana">0</strong>
             </span>
 
             <span>
-                Phase:
-                <strong id="currentPhase">
-                    Beginning
-                </strong>
+                🔵 <strong id="blueMana">0</strong>
+            </span>
+
+            <span>
+                ⚫ <strong id="blackMana">0</strong>
+            </span>
+
+            <span>
+                🔴 <strong id="redMana">0</strong>
+            </span>
+
+            <span>
+                🟢 <strong id="greenMana">0</strong>
+            </span>
+
+            <span>
+                ◇ <strong id="colorlessMana">0</strong>
             </span>
 
         </div>
 
-    </header>
 
+        <!-- MULLIGAN -->
 
-    <!-- ================================================== -->
-    <!-- GAME -->
-    <!-- ================================================== -->
-
-    <main id="game">
-
-
-        <!-- ============================================== -->
-        <!-- OPPONENT -->
-        <!-- ============================================== -->
-
-        <section class="playerArea opponentArea">
-
-
-            <!-- Opponent information -->
-
-            <div class="playerInfo">
-
-                <h2 id="opponentName">
-                    AI
-                </h2>
-
-                <div class="lifeDisplay">
-
-                    ❤️
-
-                    <strong id="opponentLife">
-                        20
-                    </strong>
-
-                </div>
-
-            </div>
-
-
-            <!-- Opponent hand -->
-
-            <div>
-
-                <h3>
-                    Opponent Hand
-                </h3>
-
-                <div
-                    id="opponentHand"
-                    class="hand hiddenCards"
-                ></div>
-
-            </div>
-
-
-            <!-- Opponent battlefield -->
-
-            <div>
-
-                <h3>
-                    Battlefield
-                </h3>
-
-                <div
-                    id="opponentBattlefield"
-                    class="battlefield"
-                ></div>
-
-            </div>
-
-        </section>
-
-
-        <!-- ============================================== -->
-        <!-- GAME CENTER -->
-        <!-- ============================================== -->
-
-        <section class="gameCenter">
-
-
-            <div class="gameStatus">
-
-                <div>
-
-                    <span>
-                        Turn
-                    </span>
-
-                    <strong id="turnNumberCenter">
-                        1
-                    </strong>
-
-                </div>
-
-
-                <div>
-
-                    <span>
-                        Phase
-                    </span>
-
-                    <strong id="currentPhaseCenter">
-                        Beginning
-                    </strong>
-
-                </div>
-
-
-                <div>
-
-                    <span>
-                        Active Player
-                    </span>
-
-                    <strong id="gameMessage">
-                        You
-                    </strong>
-
-                </div>
-
-            </div>
-
-
-            <!-- ========================================== -->
-            <!-- MULLIGAN -->
-            <!-- ========================================== -->
-
-            <div
-                id="mulliganControls"
-                class="mulliganControls"
-                style="display: none;"
-            >
-
-                <h2>
-                    Opening Hand
-                </h2>
-
-                <p>
-                    Keep your hand or take a mulligan.
-                </p>
-
-
-                <div>
-
-                    <button
-                        onclick="mulliganOpeningHand(0)"
-                    >
-                        Mulligan
-                    </button>
-
-
-                    <button
-                        onclick="keepOpeningHand(0)"
-                    >
-                        Keep Hand
-                    </button>
-
-                </div>
-
-            </div>
-
-
-            <!-- ========================================== -->
-            <!-- COMBAT -->
-            <!-- ========================================== -->
-
-            <div
-                id="combatControls"
-                class="combatControls"
-                style="display: none;"
-            >
-
-                <button
-                    onclick="resolveCombat()"
-                >
-                    Attack / Resolve Combat
-                </button>
-
-            </div>
-
-
-            <!-- ========================================== -->
-            <!-- GAME CONTROLS -->
-            <!-- ========================================== -->
-
-            <div
-                id="gameControls"
-                class="gameControls"
-            >
-
-                <button
-                    onclick="nextPhase()"
-                >
-                    Next Phase
-                </button>
-
-
-                <button
-                    onclick="endTurn()"
-                >
-                    End Turn
-                </button>
-
-            </div>
-
-        </section>
-
-
-        <!-- ============================================== -->
-        <!-- PLAYER -->
-        <!-- ============================================== -->
-
-        <section class="playerArea playerAreaBottom">
-
-
-            <!-- Player information -->
-
-            <div class="playerInfo">
-
-                <h2 id="playerName">
-                    You
-                </h2>
-
-                <div class="lifeDisplay">
-
-                    ❤️
-
-                    <strong id="playerLife">
-                        20
-                    </strong>
-
-                </div>
-
-            </div>
-
-
-            <!-- Player battlefield -->
-
-            <div>
-
-                <h3>
-                    Battlefield
-                </h3>
-
-                <div
-                    id="playerBattlefield"
-                    class="battlefield"
-                ></div>
-
-            </div>
-
-
-            <!-- Player hand -->
-
-            <div>
-
-                <h3>
-                    Your Hand
-                </h3>
-
-                <div
-                    id="playerHand"
-                    class="hand"
-                ></div>
-
-            </div>
-
-        </section>
-
-
-        <!-- ============================================== -->
-        <!-- GAME LOG -->
-        <!-- ============================================== -->
-
-        <section class="gameLog">
+        <div
+            id="mulliganControls"
+            style="display:none;"
+        >
 
             <h2>
-                Game Log
+                Opening Hand
             </h2>
 
+            <button
+                onclick="mulliganOpeningHand(0)"
+            >
+                Mulligan
+            </button>
 
-            <div
-                id="gameLog"
-            ></div>
+            <button
+                onclick="keepOpeningHand(0)"
+            >
+                Keep Hand
+            </button>
 
-        </section>
+        </div>
 
 
-    </main>
+        <!-- COMBAT -->
+
+        <div
+            id="combatControls"
+            style="display:none;"
+        >
+
+            <button
+                onclick="resolveCombat()"
+            >
+                Resolve Combat
+            </button>
+
+        </div>
 
 
-    <!-- ================================================== -->
-    <!-- SCRIPTS -->
-    <!-- ================================================== -->
+        <!-- GAME CONTROLS -->
 
-    <script src="gameState.js"></script>
+        <div
+            id="gameControls"
+        >
 
-    <script src="gameEngine.js"></script>
+            <button
+                onclick="nextPhase()"
+            >
+                Next Phase
+            </button>
 
-    <script src="gameUI.js"></script>
+            <button
+                onclick="endTurn()"
+            >
+                End Turn
+            </button>
+
+        </div>
+
+    </section>
+
+
+    <!-- ================================================= -->
+    <!-- PLAYER -->
+    <!-- ================================================= -->
+
+    <section class="playerArea playerAreaBottom">
+
+        <div class="playerInfo">
+
+            <h2 id="playerName">
+                You
+            </h2>
+
+            <div>
+
+                ❤️
+
+                <strong id="playerLife">
+                    20
+                </strong>
+
+            </div>
+
+        </div>
+
+
+        <h3>
+            Battlefield
+        </h3>
+
+        <div
+            id="playerBattlefield"
+            class="battlefield"
+        ></div>
+
+
+        <h3>
+            Your Hand
+        </h3>
+
+        <div
+            id="playerHand"
+            class="hand"
+        ></div>
+
+    </section>
+
+
+    <!-- ================================================= -->
+    <!-- LOG -->
+    <!-- ================================================= -->
+
+    <section class="gameLog">
+
+        <h2>
+            Game Log
+        </h2>
+
+        <div id="gameLog"></div>
+
+    </section>
+
+</main>
+
+
+<script src="gameState.js"></script>
+
+<script src="gameEngine.js"></script>
+
+<script src="ai.js"></script>
+
+<script src="gameUI.js"></script>
 
 
 </body>
