@@ -280,7 +280,54 @@ function renderGameInfo() {
 
 }
 
+function handleCardClick(card) {
 
+    const player =
+        currentGame.players[0];
+
+
+    // ==========================================
+    // LAND
+    // ==========================================
+
+    if (
+        isLand(card)
+    ) {
+
+        if (
+            currentGame.phase === "main1" ||
+            currentGame.phase === "main2"
+        ) {
+
+            playLand(
+                0,
+                card.instanceId
+            );
+
+        }
+
+        return;
+
+    }
+
+
+    // ==========================================
+    // CREATURE / SPELL
+    // ==========================================
+
+    if (
+        currentGame.phase === "main1" ||
+        currentGame.phase === "main2"
+    ) {
+
+        castCard(
+            0,
+            card.instanceId
+        );
+
+    }
+
+}
 // ======================================================
 // LOG
 // ======================================================
