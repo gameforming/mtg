@@ -50,8 +50,9 @@ function renderGame() {
 
     renderGameLog();
 
-}
+    renderMana();
 
+}
 
 // ======================================================
 // PLAYERS
