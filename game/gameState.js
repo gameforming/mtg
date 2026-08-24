@@ -1,24 +1,12 @@
 // ======================================================
-// GAME STATE
+// MTG GAME STATE
 // ======================================================
-//
-// Dit bestand bevat alleen de data van een wedstrijd.
-// Geen UI en geen AI-logica.
-//
-// Hierdoor kunnen we later dezelfde GameState gebruiken
-// voor:
-// - AI
-// - Multiplayer
-// - Replays
-// - Save states
-// ======================================================
-
 
 function createPlayer(
     id,
     name,
     deck,
-    startingLife
+    startingLife = 20
 ) {
 
     return {
@@ -43,8 +31,14 @@ function createPlayer(
 
         mana: {
 
-            available: 0,
+            white: 0,
+            blue: 0,
+            black: 0,
+            red: 0,
+            green: 0,
+            colorless: 0,
 
+            available: 0,
             maximum: 0
 
         },
@@ -64,38 +58,27 @@ function createPlayer(
 }
 
 
+// ======================================================
+// GAME STATE
+// ======================================================
+
 function createGameState(
     mode,
     playerDeck,
     opponentDeck
 ) {
 
+    const startingLife =
+        mode?.rules?.startingLife || 20;
+
+
     return {
-        combat: {
 
-            attackers: [],
-
-            blockers: [],
-
-            damageAssigned: false
-
-        },
-        // ==================================================
-        // GAME INFORMATION
-        // ==================================================
-
-        id: crypto.randomUUID(),
-
-        mode: mode.id,
+        mode: mode,
 
         modeData: mode,
 
-        status: "starting",
-
-
-        // ==================================================
-        // TURN
-        // ==================================================
+        status: "loading",
 
         turn: 0,
 
@@ -103,19 +86,13 @@ function createGameState(
 
         priorityPlayer: 0,
 
-
-        // ==================================================
-        // PHASE
-        // ==================================================
+        firstTurn: true,
 
         phase: "beginning",
 
         step: "untap",
 
-
-        // ==================================================
-        // PLAYERS
-        // ==================================================
+        winner: null,
 
         players: [
 
@@ -123,53 +100,33 @@ function createGameState(
                 0,
                 "You",
                 playerDeck,
-                mode.rules.startingLife
+                startingLife
             ),
 
             createPlayer(
                 1,
                 "AI",
                 opponentDeck,
-                mode.rules.startingLife
+                startingLife
             )
 
         ],
 
+        combat: {
 
-        // ==================================================
-        // STACK
-        // ==================================================
+            attackers: [],
+
+            blockers: [],
+
+            damageAssigned: false,
+
+            resolved: false
+
+        },
 
         stack: [],
 
-
-        // ==================================================
-        // GAME LOG
-        // ==================================================
-
-        log: [],
-
-
-        // ==================================================
-        // WINNER
-        // ==================================================
-
-        winner: null,
-
-
-        // ==================================================
-        // MULLIGAN
-        // ==================================================
-
-        mulligan: {
-
-            active: true,
-
-            playersReady: [],
-
-            playerChoices: []
-
-        }
+        log: []
 
     };
 
