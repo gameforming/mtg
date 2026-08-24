@@ -2371,3 +2371,70 @@ function getCurrentPlayer() {
     ];
 
 }
+// ======================================================
+// LOAD PENDING GAME
+// ======================================================
+
+function startPendingGame() {
+
+    console.log(
+        "Checking for pending game..."
+    );
+
+
+    const saved =
+        sessionStorage.getItem(
+            "mtg_pending_game"
+        );
+
+
+    if (!saved) {
+
+        console.error(
+            "No pending game found."
+        );
+
+
+        return;
+
+    }
+
+
+    let config;
+
+
+    try {
+
+        config =
+            JSON.parse(saved);
+
+    } catch (error) {
+
+        console.error(
+            "Invalid game config:",
+            error
+        );
+
+
+        return;
+
+    }
+
+
+    sessionStorage.removeItem(
+        "mtg_pending_game"
+    );
+
+
+    console.log(
+        "Game configuration loaded."
+    );
+
+
+    startGameEngine(
+        config.mode,
+        config.playerDeck,
+        config.opponentDeck
+    );
+
+}
