@@ -1,3 +1,14 @@
+// ======================================================
+// MTG GAME MODES
+// ======================================================
+//
+// Hier staan ALLE requirements van de gamemodes.
+// De rest van de game gebruikt deze gegevens.
+//
+// Voeg later eenvoudig nieuwe gamemodes toe.
+// ======================================================
+
+
 const GAME_MODES = {
 
     standard: {
@@ -7,7 +18,12 @@ const GAME_MODES = {
         name: "Standard",
 
         description:
-            "Play a normal Standard Magic game.",
+            "Play a traditional 60-card Magic game.",
+
+        players: {
+            minimum: 2,
+            maximum: 2
+        },
 
         deck: {
 
@@ -20,14 +36,6 @@ const GAME_MODES = {
             maxCopies: 4,
 
             commander: false
-
-        },
-
-        players: {
-
-            minimum: 2,
-
-            maximum: 2
 
         },
 
@@ -59,7 +67,15 @@ const GAME_MODES = {
         name: "Commander",
 
         description:
-            "Play a four-player Commander game.",
+            "Build a 100-card singleton deck around a commander.",
+
+        players: {
+
+            minimum: 2,
+
+            maximum: 4
+
+        },
 
         deck: {
 
@@ -72,14 +88,6 @@ const GAME_MODES = {
             maxCopies: 1,
 
             commander: true
-
-        },
-
-        players: {
-
-            minimum: 2,
-
-            maximum: 4
 
         },
 
@@ -101,6 +109,236 @@ const GAME_MODES = {
 
         }
 
+    },
+
+
+    modern: {
+
+        id: "modern",
+
+        name: "Modern",
+
+        description:
+            "Play a 60-card Modern deck.",
+
+        players: {
+
+            minimum: 2,
+
+            maximum: 2
+
+        },
+
+        deck: {
+
+            minimumCards: 60,
+
+            maximumCards: null,
+
+            sideboardSize: 15,
+
+            maxCopies: 4,
+
+            commander: false
+
+        },
+
+        rules: {
+
+            startingLife: 20,
+
+            startingHand: 7,
+
+            mulligan: true
+
+        },
+
+        opponents: {
+
+            ai: true,
+
+            multiplayer: true
+
+        }
+
+    },
+
+
+    pioneer: {
+
+        id: "pioneer",
+
+        name: "Pioneer",
+
+        description:
+            "Play a 60-card Pioneer deck.",
+
+        players: {
+
+            minimum: 2,
+
+            maximum: 2
+
+        },
+
+        deck: {
+
+            minimumCards: 60,
+
+            maximumCards: null,
+
+            sideboardSize: 15,
+
+            maxCopies: 4,
+
+            commander: false
+
+        },
+
+        rules: {
+
+            startingLife: 20,
+
+            startingHand: 7,
+
+            mulligan: true
+
+        },
+
+        opponents: {
+
+            ai: true,
+
+            multiplayer: true
+
+        }
+
+    },
+
+
+    legacy: {
+
+        id: "legacy",
+
+        name: "Legacy",
+
+        description:
+            "Play a 60-card Legacy deck.",
+
+        players: {
+
+            minimum: 2,
+
+            maximum: 2
+
+        },
+
+        deck: {
+
+            minimumCards: 60,
+
+            maximumCards: null,
+
+            sideboardSize: 15,
+
+            maxCopies: 4,
+
+            commander: false
+
+        },
+
+        rules: {
+
+            startingLife: 20,
+
+            startingHand: 7,
+
+            mulligan: true
+
+        },
+
+        opponents: {
+
+            ai: true,
+
+            multiplayer: true
+
+        }
+
+    },
+
+
+    test: {
+
+        id: "test",
+
+        name: "Playtest",
+
+        description:
+            "A free mode for testing decks without format restrictions.",
+
+        players: {
+
+            minimum: 2,
+
+            maximum: 2
+
+        },
+
+        deck: {
+
+            minimumCards: 1,
+
+            maximumCards: null,
+
+            sideboardSize: 0,
+
+            maxCopies: null,
+
+            commander: false
+
+        },
+
+        rules: {
+
+            startingLife: 20,
+
+            startingHand: 7,
+
+            mulligan: true
+
+        },
+
+        opponents: {
+
+            ai: true,
+
+            multiplayer: false
+
+        }
+
     }
 
 };
+
+
+// ======================================================
+// GET ALL MODES
+// ======================================================
+
+function getGameModes() {
+
+    return Object.values(GAME_MODES);
+
+}
+
+
+// ======================================================
+// GET MODE
+// ======================================================
+
+function getGameMode(modeId) {
+
+    return GAME_MODES[modeId] || null;
+
+}
