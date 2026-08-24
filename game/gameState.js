@@ -14,20 +14,23 @@
 // ======================================================
 
 
-function createPlayer(id, name, deck, startingLife) {
+function createPlayer(
+    id,
+    name,
+    deck,
+    startingLife
+) {
 
     return {
 
-        id: id,
+        id,
 
-        name: name,
+        name,
 
         life: startingLife,
 
-        // Deck
         library: deck,
 
-        // Zones
         hand: [],
 
         battlefield: [],
@@ -38,13 +41,20 @@ function createPlayer(id, name, deck, startingLife) {
 
         commandZone: [],
 
-        // Mana komt later
         mana: {
+
             available: 0,
+
             maximum: 0
+
         },
 
-        // Extra informatie
+        landsPlayed: 0,
+
+        handKept: false,
+
+        mulligans: 0,
+
         hasLost: false,
 
         hasWon: false
