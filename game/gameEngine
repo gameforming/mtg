@@ -8,7 +8,131 @@ let currentGame = null;
 // ======================================================
 // START GAME
 // ======================================================
+async function loadCardData(cards) {
 
+    const cache = {};
+
+    for (const card of cards) {
+
+        if (cache[card.id]) {
+
+            Object.assign(
+                card,
+                cache[card.id]
+            );
+
+            continue;
+
+        }
+
+
+        try {
+
+            const response =
+                await fetch(
+                    `https://api.scryfall.com/cards/${card.id}`
+                );
+
+
+            if (!response.ok) {
+                continue;
+            }
+
+
+            const data =
+                await response.json();
+
+
+            const parsed = {
+
+                typeLine:
+                    data.type_line || "",
+
+                oracleText:
+                    data.oracle_text || "",
+
+                manaCost:
+                    data.mana_cost || "",
+
+                power:
+                    data.power !== undefined
+                        ? Number(data.power)
+                        : null,
+
+                toughness:
+                    data.toughness !== undefined
+                        ? Number(data.toughness)
+                        : null,
+
+                colors:
+                    data.colors || [],
+
+                types:
+                    getCardTypes(
+                        data.type_line || ""
+                    ),
+
+                subtypes:
+                    getCardSubtypes(
+                        data.type_line || ""
+                    )
+
+            };
+
+
+            cache[card.id] =
+                parsed;
+
+
+            Object.assign(
+                card,
+                parsed
+            );
+
+
+        } catch (error) {
+
+            console.error(
+                "Could not load:",
+                card.name,
+                error
+            );
+
+        }
+
+    }
+
+}
+
+
+function getCardTypes(typeLine) {
+
+    const beforeDash =
+        typeLine.split("—")[0].trim();
+
+
+    return beforeDash.split(" ");
+
+}
+
+
+function getCardSubtypes(typeLine) {
+
+    if (
+        !typeLine.includes("—")
+    ) {
+
+        return [];
+
+    }
+
+
+    return typeLine
+        .split("—")[1]
+        .trim()
+        .split(" ");
+
+}
 async function startGameEngine(
     mode,
     playerDeck,
@@ -22,6 +146,16 @@ async function startGameEngine(
         prepareDeck(opponentDeck);
 
 
+    // NIEUW
+    await loadCardData(
+        playerLibrary
+    );
+
+    await loadCardData(
+        opponentLibrary
+    );
+
+
     currentGame = createGameState(
         mode,
         playerLibrary,
@@ -29,14 +163,15 @@ async function startGameEngine(
     );
 
 
-    shuffle(currentGame.players[0].library);
-    shuffle(currentGame.players[1].library);
+    shuffle(
+        currentGame.players[0].library
+    );
+
+    shuffle(
+        currentGame.players[1].library
+    );
 
 
-    logGame("Game started.");
-
-
-    // Opening hands
     drawCards(
         0,
         mode.rules.startingHand
@@ -48,13 +183,13 @@ async function startGameEngine(
     );
 
 
-    currentGame.status = "mulligan";
+    currentGame.status =
+        "mulligan";
 
 
     openGamePage();
 
 }
-
 
 // ======================================================
 // PREPARE DECK
