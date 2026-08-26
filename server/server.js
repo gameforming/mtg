@@ -125,7 +125,7 @@ app.get(
         catch (error) {
 
             console.error(
-                "Scryfall error:",
+                "Scryfall search error:",
                 error
             );
 
@@ -144,7 +144,187 @@ app.get(
 
 
 // ======================================================
+// CARD IMAGE PROXY
+// IMPORTANT:
+// THIS MUST COME BEFORE /api/cards/:id
+// ======================================================
+
+app.get(
+    "/api/cards/image",
+    async (req, res) => {
+
+        try {
+
+            const imageUrl =
+                String(
+                    req.query.url || ""
+                ).trim();
+
+
+            if (!imageUrl) {
+
+                return res.status(400).json({
+
+                    error:
+                        "Missing image URL."
+
+                });
+
+            }
+
+
+            // ------------------------------------------
+            // CHECK URL
+            // ------------------------------------------
+
+            let parsed;
+
+            try {
+
+                parsed =
+                    new URL(imageUrl);
+
+            }
+
+            catch {
+
+                return res.status(400).json({
+
+                    error:
+                        "Invalid image URL."
+
+                });
+
+            }
+
+
+            // ------------------------------------------
+            // ONLY ALLOW SCRYFALL IMAGES
+            // ------------------------------------------
+
+            if (
+                parsed.hostname !==
+                "cards.scryfall.io"
+            ) {
+
+                return res.status(403).json({
+
+                    error:
+                        "Invalid image host."
+
+                });
+
+            }
+
+
+            // ------------------------------------------
+            // FETCH IMAGE
+            // ------------------------------------------
+
+            console.log(
+                "Proxying image:",
+                imageUrl
+            );
+
+
+            const response =
+                await fetch(
+                    imageUrl,
+                    {
+                        headers: {
+
+                            "User-Agent":
+                                "MTG-Game/1.0",
+
+                            "Accept":
+                                "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8"
+
+                        }
+                    }
+                );
+
+
+            if (!response.ok) {
+
+                console.error(
+                    "Scryfall image error:",
+                    response.status,
+                    imageUrl
+                );
+
+
+                return res
+                    .status(response.status)
+                    .send(
+                        "Image unavailable"
+                    );
+
+            }
+
+
+            // ------------------------------------------
+            // CONTENT TYPE
+            // ------------------------------------------
+
+            const contentType =
+                response.headers.get(
+                    "content-type"
+                );
+
+
+            res.setHeader(
+                "Content-Type",
+                contentType ||
+                "image/jpeg"
+            );
+
+
+            // ------------------------------------------
+            // CACHE
+            // ------------------------------------------
+
+            res.setHeader(
+                "Cache-Control",
+                "public, max-age=86400"
+            );
+
+
+            // ------------------------------------------
+            // SEND IMAGE
+            // ------------------------------------------
+
+            const buffer =
+                Buffer.from(
+                    await response.arrayBuffer()
+                );
+
+
+            res.send(buffer);
+
+        }
+
+        catch (error) {
+
+            console.error(
+                "Image proxy error:",
+                error
+            );
+
+
+            res.status(500).send(
+                "Could not load image."
+            );
+
+        }
+
+    }
+);
+
+
+// ======================================================
 // GET SINGLE CARD
+// IMPORTANT:
+// THIS MUST COME AFTER /api/cards/image
 // ======================================================
 
 app.get(
@@ -196,6 +376,7 @@ app.get(
         catch (error) {
 
             console.error(
+                "Scryfall card error:",
                 error
             );
 
@@ -225,117 +406,6 @@ app.listen(
         console.log(
             `MTG proxy running on port ${PORT}`
         );
-
-    }
-);
-// ======================================================
-// CARD IMAGE PROXY
-// ======================================================
-
-app.get(
-    "/api/cards/image",
-    async (req, res) => {
-
-        try {
-
-            const imageUrl =
-                String(
-                    req.query.url || ""
-                ).trim();
-
-
-            if (!imageUrl) {
-
-                return res.status(400).json({
-                    error: "Missing image URL."
-                });
-
-            }
-
-
-            // Alleen Scryfall-afbeeldingen toestaan
-            const parsed =
-                new URL(imageUrl);
-
-
-            if (
-                parsed.hostname !==
-                "cards.scryfall.io"
-            ) {
-
-                return res.status(403).json({
-                    error: "Invalid image host."
-                });
-
-            }
-
-
-            const response =
-                await fetch(
-                    imageUrl,
-                    {
-                        headers: {
-                            "User-Agent":
-                                "MTG-Game/1.0"
-                        }
-                    }
-                );
-
-
-            if (!response.ok) {
-
-                return res
-                    .status(response.status)
-                    .send(
-                        "Image unavailable"
-                    );
-
-            }
-
-
-            const contentType =
-                response.headers.get(
-                    "content-type"
-                );
-
-
-            res.setHeader(
-                "Content-Type",
-                contentType ||
-                "image/jpeg"
-            );
-
-
-            // Cache afbeeldingen
-            res.setHeader(
-                "Cache-Control",
-                "public, max-age=86400"
-            );
-
-
-            const buffer =
-                Buffer.from(
-                    await response.arrayBuffer()
-                );
-
-
-            res.send(buffer);
-
-        }
-
-        catch (error) {
-
-            console.error(
-                "Image proxy error:",
-                error
-            );
-
-
-            res.status(500).send(
-                "Could not load image."
-            );
-
-        }
 
     }
 );
