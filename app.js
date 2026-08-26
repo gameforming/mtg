@@ -124,11 +124,13 @@ async function searchCards() {
     try {
 
         const response =
-            await fetch(
-                `https://api.scryfall.com/cards/search?q=${encodeURIComponent(input)}`
-            );
+            const SCRYFALL_PROXY =
+                    "https://mtg-scryfall-proxy.onrender.com";
 
-
+            fetch(
+                `${SCRYFALL_PROXY}/api/cards/search?q=` +
+                 encodeURIComponent(search)
+            )
         if (!response.ok) {
             throw new Error(
                 "Scryfall search failed"
