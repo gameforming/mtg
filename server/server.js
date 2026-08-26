@@ -228,3 +228,114 @@ app.listen(
 
     }
 );
+// ======================================================
+// CARD IMAGE PROXY
+// ======================================================
+
+app.get(
+    "/api/cards/image",
+    async (req, res) => {
+
+        try {
+
+            const imageUrl =
+                String(
+                    req.query.url || ""
+                ).trim();
+
+
+            if (!imageUrl) {
+
+                return res.status(400).json({
+                    error: "Missing image URL."
+                });
+
+            }
+
+
+            // Alleen Scryfall-afbeeldingen toestaan
+            const parsed =
+                new URL(imageUrl);
+
+
+            if (
+                parsed.hostname !==
+                "cards.scryfall.io"
+            ) {
+
+                return res.status(403).json({
+                    error: "Invalid image host."
+                });
+
+            }
+
+
+            const response =
+                await fetch(
+                    imageUrl,
+                    {
+                        headers: {
+                            "User-Agent":
+                                "MTG-Game/1.0"
+                        }
+                    }
+                );
+
+
+            if (!response.ok) {
+
+                return res
+                    .status(response.status)
+                    .send(
+                        "Image unavailable"
+                    );
+
+            }
+
+
+            const contentType =
+                response.headers.get(
+                    "content-type"
+                );
+
+
+            res.setHeader(
+                "Content-Type",
+                contentType ||
+                "image/jpeg"
+            );
+
+
+            // Cache afbeeldingen
+            res.setHeader(
+                "Cache-Control",
+                "public, max-age=86400"
+            );
+
+
+            const buffer =
+                Buffer.from(
+                    await response.arrayBuffer()
+                );
+
+
+            res.send(buffer);
+
+        }
+
+        catch (error) {
+
+            console.error(
+                "Image proxy error:",
+                error
+            );
+
+
+            res.status(500).send(
+                "Could not load image."
+            );
+
+        }
+
+    }
+);
