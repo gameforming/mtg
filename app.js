@@ -163,22 +163,25 @@ async function searchCards() {
 // DISPLAY SEARCH RESULTS
 // ======================================================
 
+// ======================================================
+// DISPLAY SEARCH RESULTS
+// ======================================================
+
 function displaySearchResults(data) {
+
     const SCRYFALL_PROXY =
         "https://mtg-scryfall-proxy.onrender.com";
-    const results =
-        document.getElementById(
-            "searchResults"
-        );
 
-    const imageUrl =
-        card.image_uris?.normal ||
-        card.card_faces?.[0]?.image_uris?.normal;
-        results.innerHTML = "";
-    const proxyImage =
-        imageUrl
-            ? `${SCRYFALL_PROXY}/api/cards/image?url=${encodeURIComponent(imageUrl)}`
-            : "";
+    const results =
+        document.getElementById("searchResults");
+
+
+    results.innerHTML = "";
+
+
+    // ------------------------------------------
+    // NO RESULTS
+    // ------------------------------------------
 
     if (!data.data || data.data.length === 0) {
 
@@ -187,21 +190,39 @@ function displaySearchResults(data) {
         `;
 
         return;
-
     }
 
 
+    // ------------------------------------------
+    // DISPLAY EVERY CARD
+    // ------------------------------------------
+
     data.data.forEach(card => {
 
-        const image =
+        // Get image from normal cards
+        // or double-faced cards
+        const imageUrl =
             card.image_uris?.normal ||
             card.card_faces?.[0]?.image_uris?.normal;
 
 
-        if (!image) {
+        // Skip cards without an image
+        if (!imageUrl) {
             return;
         }
 
+
+        // ------------------------------------------
+        // PROXY IMAGE
+        // ------------------------------------------
+
+        const proxyImage =
+            `${SCRYFALL_PROXY}/api/cards/image?url=${encodeURIComponent(imageUrl)}`;
+
+
+        // ------------------------------------------
+        // CARD ELEMENT
+        // ------------------------------------------
 
         const element =
             document.createElement("div");
@@ -224,7 +245,7 @@ function displaySearchResults(data) {
         decks.forEach(deck => {
 
             deckOptions += `
-                <option value="${deck.id}">
+                <option value="${escapeHTML(deck.id)}">
                     ${escapeHTML(deck.name)}
                 </option>
             `;
@@ -232,12 +253,16 @@ function displaySearchResults(data) {
         });
 
 
+        // ------------------------------------------
+        // CARD HTML
+        // ------------------------------------------
+
         element.innerHTML = `
 
-           <img
+            <img
                 src="${proxyImage}"
                 alt="${escapeHTML(card.name)}"
-            >
+                loading="lazy"
             >
 
             <h3>
@@ -288,7 +313,6 @@ function displaySearchResults(data) {
                     );
 
                     return;
-
                 }
 
 
@@ -320,6 +344,10 @@ function displaySearchResults(data) {
             }
         );
 
+
+        // ------------------------------------------
+        // ADD CARD TO RESULTS
+        // ------------------------------------------
 
         results.appendChild(element);
 
