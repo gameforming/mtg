@@ -164,15 +164,21 @@ async function searchCards() {
 // ======================================================
 
 function displaySearchResults(data) {
-
+    const SCRYFALL_PROXY =
+        "https://mtg-scryfall-proxy.onrender.com";
     const results =
         document.getElementById(
             "searchResults"
         );
 
-
-    results.innerHTML = "";
-
+    const imageUrl =
+        card.image_uris?.normal ||
+        card.card_faces?.[0]?.image_uris?.normal;
+        results.innerHTML = "";
+    const proxyImage =
+        imageUrl
+            ? `${SCRYFALL_PROXY}/api/cards/image?url=${encodeURIComponent(imageUrl)}`
+            : "";
 
     if (!data.data || data.data.length === 0) {
 
@@ -228,9 +234,10 @@ function displaySearchResults(data) {
 
         element.innerHTML = `
 
-            <img
-                src="${image}"
+           <img
+                src="${proxyImage}"
                 alt="${escapeHTML(card.name)}"
+            >
             >
 
             <h3>
