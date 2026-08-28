@@ -830,7 +830,15 @@ function endTurn() {
 // ======================================================
 
 function nextPhase() {
+   
 
+    if (!currentGame) {
+
+        console.error(
+            "Cannot go to next phase: no game is running."
+        );
+
+        return;
     if (
         currentGame.status !==
         "playing"
