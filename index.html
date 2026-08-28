@@ -12,6 +12,11 @@
     content="width=device-width, initial-scale=1.0"
 >
 
+<meta
+    name="description"
+    content="MTG Game - Search cards, build decks and play Magic."
+>
+
 <title>MTG Game</title>
 
 <link
@@ -24,88 +29,149 @@
 
 <body>
 
-<header>
+<!-- ======================================================
+     HEADER
+====================================================== -->
+
+<header class="siteHeader">
 
 ```
-<h1>MTG Game</h1>
+<div class="headerContent">
 
-<nav>
+    <h1>MTG Game</h1>
 
-    <button onclick="showPage('searchPage')">
-        Search
-    </button>
+    <nav
+        class="mainNav"
+        aria-label="Main navigation"
+    >
 
-    <button onclick="showPage('prebuiltPage')">
-        Prebuilt Decks
-    </button>
+        <button
+            type="button"
+            onclick="showPage('searchPage')"
+        >
+            Search
+        </button>
 
-    <button onclick="showPage('collectionPage')">
-        Collection
-    </button>
+        <button
+            type="button"
+            onclick="showPage('prebuiltPage')"
+        >
+            Prebuilt Decks
+        </button>
 
-    <button onclick="showPage('decksPage')">
-        Decks
-    </button>
+        <button
+            type="button"
+            onclick="showPage('collectionPage')"
+        >
+            Collection
+        </button>
 
-    <button onclick="openPlay()">
-        Play
-    </button>
+        <button
+            type="button"
+            onclick="showPage('decksPage')"
+        >
+            Decks
+        </button>
 
-</nav>
+        <button
+            type="button"
+            onclick="openPlay()"
+        >
+            Play
+        </button>
+
+    </nav>
+
+</div>
 ```
 
 </header>
 
-<main>
+<!-- ======================================================
+     MAIN
+====================================================== -->
+
+<main class="mainContent">
 
 ```
-<!-- ========================= -->
-<!-- SEARCH -->
-<!-- ========================= -->
+<!-- ==================================================
+     SEARCH PAGE
+================================================== -->
 
-<section id="searchPage">
+<section
+    id="searchPage"
+    class="page"
+>
 
-    <h2>Search Cards</h2>
+    <div class="pageHeader">
+
+        <h2>Search Cards</h2>
+
+        <p>
+            Search for any Magic: The Gathering card.
+        </p>
+
+    </div>
+
 
     <div class="searchBox">
+
+        <label
+            for="searchInput"
+            class="srOnly"
+        >
+            Search cards
+        </label>
 
         <input
             id="searchInput"
             type="text"
             placeholder="Search cards..."
+            autocomplete="off"
             onkeydown="handleSearchKey(event)"
         >
 
-        <button onclick="searchCards()">
+        <button
+            type="button"
+            onclick="searchCards()"
+        >
             Search
         </button>
 
     </div>
 
+
     <div
         id="searchResults"
         class="cardGrid"
+        aria-live="polite"
     ></div>
 
 </section>
 
 
 
-<!-- ========================= -->
-<!-- PREBUILT DECKS -->
-<!-- ========================= -->
+<!-- ==================================================
+     PREBUILT DECKS PAGE
+================================================== -->
 
 <section
     id="prebuiltPage"
-    class="hidden"
+    class="page hidden"
 >
 
-    <h2>Prebuilt Decks</h2>
+    <div class="pageHeader">
 
-    <p>
-        Choose a prebuilt deck and add it to your decks.
-        The full decklist is only loaded when you add it.
-    </p>
+        <h2>Prebuilt Decks</h2>
+
+        <p>
+            Choose a ready-made deck and add it to
+            your decks. The full decklist is only
+            loaded when you add the deck.
+        </p>
+
+    </div>
+
 
     <div
         id="prebuiltDecks"
@@ -116,16 +182,25 @@
 
 
 
-<!-- ========================= -->
-<!-- COLLECTION -->
-<!-- ========================= -->
+<!-- ==================================================
+     COLLECTION PAGE
+================================================== -->
 
 <section
     id="collectionPage"
-    class="hidden"
+    class="page hidden"
 >
 
-    <h2>My Collection</h2>
+    <div class="pageHeader">
+
+        <h2>My Collection</h2>
+
+        <p>
+            All cards you have collected.
+        </p>
+
+    </div>
+
 
     <div
         id="collection"
@@ -136,24 +211,37 @@
 
 
 
-<!-- ========================= -->
-<!-- DECKS -->
-<!-- ========================= -->
+<!-- ==================================================
+     DECKS PAGE
+================================================== -->
 
 <section
     id="decksPage"
-    class="hidden"
+    class="page hidden"
 >
 
-    <div class="deckHeader">
+    <div class="pageHeader deckHeader">
 
-        <h2>My Decks</h2>
+        <div>
 
-        <button onclick="createDeck()">
+            <h2>My Decks</h2>
+
+            <p>
+                Create, manage and open your decks.
+            </p>
+
+        </div>
+
+
+        <button
+            type="button"
+            onclick="createDeck()"
+        >
             + Create Deck
         </button>
 
     </div>
+
 
     <div
         id="decks"
@@ -164,20 +252,30 @@
 
 
 
-<!-- ========================= -->
-<!-- DECK VIEW -->
-<!-- ========================= -->
+<!-- ==================================================
+     DECK VIEW PAGE
+================================================== -->
 
 <section
     id="deckViewPage"
-    class="hidden"
+    class="page hidden"
 >
 
-    <button onclick="showPage('decksPage')">
-        ← Back to Decks
-    </button>
+    <div class="deckViewHeader">
 
-    <h2 id="deckViewTitle"></h2>
+        <button
+            type="button"
+            onclick="showPage('decksPage')"
+        >
+            ← Back to Decks
+        </button>
+
+        <h2 id="deckViewTitle">
+            Deck
+        </h2>
+
+    </div>
+
 
     <div
         id="deckViewCards"
@@ -188,55 +286,108 @@
 
 
 
-<!-- ========================= -->
-<!-- PLAY -->
-<!-- ========================= -->
+<!-- ==================================================
+     PLAY PAGE
+================================================== -->
 
 <section
     id="playPage"
-    class="hidden"
+    class="page hidden"
 >
 
-    <h2>Play Magic</h2>
+    <div class="pageHeader">
+
+        <h2>Play Magic</h2>
+
+        <p>
+            Configure your game before starting.
+        </p>
+
+    </div>
 
 
-    <h3>1. Choose Game Mode</h3>
 
-    <div
-        id="gameModes"
-        class="gameModeGrid"
-    ></div>
+    <!-- ==============================================
+         GAME MODE
+    =============================================== -->
 
+    <div class="playStep">
 
-    <div
-        id="selectedMode"
-        class="selectedMode"
-    ></div>
+        <h3>
+            1. Choose Game Mode
+        </h3>
 
-
-    <h3>2. Choose Deck</h3>
-
-    <div
-        id="deckSelection"
-    ></div>
+        <div
+            id="gameModes"
+            class="gameModeGrid"
+        ></div>
 
 
-    <h3>3. Choose Opponent</h3>
+        <div
+            id="selectedMode"
+            class="selectedMode"
+            aria-live="polite"
+        ></div>
 
-    <div
-        id="opponentSelection"
-        class="opponentGrid"
-    ></div>
+    </div>
 
+
+
+    <!-- ==============================================
+         DECK SELECTION
+    =============================================== -->
+
+    <div class="playStep">
+
+        <h3>
+            2. Choose Deck
+        </h3>
+
+        <div
+            id="deckSelection"
+            class="deckSelection"
+        ></div>
+
+    </div>
+
+
+
+    <!-- ==============================================
+         OPPONENT SELECTION
+    =============================================== -->
+
+    <div class="playStep">
+
+        <h3>
+            3. Choose Opponent
+        </h3>
+
+        <div
+            id="opponentSelection"
+            class="opponentGrid"
+        ></div>
+
+    </div>
+
+
+
+    <!-- ==============================================
+         START GAME
+    =============================================== -->
 
     <div
         id="startGameContainer"
+        class="startGameContainer"
     ></div>
 
 </section>
 ```
 
 </main>
+
+<!-- ======================================================
+     JAVASCRIPT
+====================================================== -->
 
 <script src="app.js"></script>
 
