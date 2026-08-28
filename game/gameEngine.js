@@ -839,6 +839,7 @@ function nextPhase() {
         );
 
         return;
+    }
     if (
         currentGame.status !==
         "playing"
