@@ -1200,6 +1200,321 @@ function escapeHTML(value) {
 
 }
 
+// ======================================================
+// PREBUILT DECKS
+// ======================================================
+
+const MTG_PROXY =
+"https://mtg-scryfall-proxy.onrender.com";
+
+// ------------------------------------------------------
+// PREBUILT DECKS
+// ------------------------------------------------------
+//
+// We laden alleen metadata.
+// De daadwerkelijke kaarten worden pas geladen
+// wanneer de speler op "Add to My Decks" klikt.
+// ------------------------------------------------------
+
+const prebuiltDecks = [
+
+```
+{
+    id: "easy-starter",
+
+    name: "Easy Starter Deck",
+
+    description:
+        "Een eenvoudig deck om Magic te leren. " +
+        "Veel creatures en simpele aanvallen.",
+
+    difficulty: "Easy",
+
+    color: "White",
+
+    // Wordt gebruikt als externe deck identifier.
+    // Deze kan later vervangen worden door een
+    // specifieke MTGJSON deck.
+    mtgjsonName: "Boros Convoke",
+
+    type: "preconstructed"
+},
+
+
+{
+    id: "complex-commander",
+
+    name: "Complex Commander Deck",
+
+    description:
+        "Een veel complexer Commander deck met " +
+        "meer interactie, triggers en moeilijke keuzes.",
+
+    difficulty: "Hard",
+
+    color: "Esper",
+
+    mtgjsonName: "Endless Punishment",
+
+    type: "preconstructed"
+}
+```
+
+];
+
+// ------------------------------------------------------
+// SHOW PREBUILT DECKS
+// ------------------------------------------------------
+
+function renderPrebuiltDecks() {
+
+```
+const container =
+    document.getElementById(
+        "prebuiltDecks"
+    );
+
+
+if (!container) {
+    return;
+}
+
+
+container.innerHTML = "";
+
+
+prebuiltDecks.forEach(deck => {
+
+    const element =
+        document.createElement("div");
+
+
+    element.className = "deck";
+
+
+    const alreadyAdded =
+        decks.some(
+            existing =>
+                existing.prebuiltId === deck.id
+        );
+
+
+    element.innerHTML = `
+
+        <h3>
+            ${escapeHTML(deck.name)}
+        </h3>
+
+        <p>
+            ${escapeHTML(deck.description)}
+        </p>
+
+        <p>
+            <strong>
+                Difficulty:
+            </strong>
+
+            ${escapeHTML(deck.difficulty)}
+        </p>
+
+        <p>
+            <strong>
+                Color:
+            </strong>
+
+            ${escapeHTML(deck.color)}
+        </p>
+
+        <button
+            class="addPrebuiltButton"
+            ${alreadyAdded ? "disabled" : ""}
+        >
+
+            ${
+                alreadyAdded
+                    ? "Already Added"
+                    : "Add to My Decks"
+            }
+
+        </button>
+
+    `;
+
+
+    const button =
+        element.querySelector(
+            ".addPrebuiltButton"
+        );
+
+
+    if (!alreadyAdded) {
+
+        button.addEventListener(
+            "click",
+            () => {
+
+                addPrebuiltDeck(
+                    deck
+                );
+
+            }
+        );
+
+    }
+
+
+    container.appendChild(
+        element
+    );
+
+});
+```
+
+}
+
+// ------------------------------------------------------
+// ADD PREBUILT DECK
+// ------------------------------------------------------
+
+async function addPrebuiltDeck(
+prebuilt
+) {
+
+```
+const alreadyExists =
+    decks.some(
+        deck =>
+            deck.prebuiltId ===
+            prebuilt.id
+    );
+
+
+if (alreadyExists) {
+
+    alert(
+        "This prebuilt deck is already in your decks."
+    );
+
+    return;
+
+}
+
+
+const buttonText =
+    "Loading decklist...";
+
+
+console.log(
+    buttonText,
+    prebuilt.name
+);
+
+
+try {
+
+    /*
+     * We ask our own server for the deck.
+     *
+     * IMPORTANT:
+     * We are NOT downloading all prebuilt decks.
+     *
+     * Only this selected deck is requested.
+     */
+
+    const response =
+        await fetch(
+            `${MTG_PROXY}/api/prebuilt-decks/${encodeURIComponent(
+                prebuilt.mtgjsonName
+            )}`
+        );
+
+
+    if (!response.ok) {
+
+        throw new Error(
+            "Could not load prebuilt deck."
+        );
+
+    }
+
+
+    const data =
+        await response.json();
+
+
+    if (
+        !data.cards ||
+        !Array.isArray(data.cards)
+    ) {
+
+        throw new Error(
+            "Invalid deck data."
+        );
+
+    }
+
+
+    const deck = {
+
+        id:
+            crypto.randomUUID(),
+
+        name:
+            prebuilt.name,
+
+        prebuiltId:
+            prebuilt.id,
+
+        cards:
+            data.cards,
+
+        source:
+            "MTGJSON"
+
+    };
+
+
+    decks.push(deck);
+
+
+    saveDecks();
+
+
+    renderDecks();
+
+
+    renderPrebuiltDecks();
+
+
+    alert(
+        `${prebuilt.name} was added to your decks.`
+    );
+
+
+}
+
+catch (error) {
+
+    console.error(
+        "Prebuilt deck error:",
+        error
+    );
+
+
+    alert(
+        "Could not load this prebuilt deck."
+    );
+
+}
+```
+
+}
+
+// ======================================================
+// PREBUILT PAGE STARTUP
+// ======================================================
+
+renderPrebuiltDecks();
 
 // ======================================================
 // STARTUP
