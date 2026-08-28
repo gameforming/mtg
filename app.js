@@ -1,4 +1,3 @@
-```javascript
 // ======================================================
 // MTG GAME - APP.JS
 // ======================================================
@@ -8,23 +7,52 @@
 // CONFIG
 // ======================================================
 
-const MTG_PROXY =
-    "https://mtg-scryfall-proxy.onrender.com";
+const MTG_PROXY = "https://mtg-scryfall-proxy.onrender.com";
 
 
 // ======================================================
 // DATA
 // ======================================================
 
-let collection =
-    JSON.parse(
-        localStorage.getItem("mtgCollection")
-    ) || [];
+let collection = [];
 
-let decks =
-    JSON.parse(
-        localStorage.getItem("mtgDecks")
-    ) || [];
+let decks = [];
+
+
+// ======================================================
+// LOAD STORAGE
+// ======================================================
+
+try {
+
+    collection =
+        JSON.parse(
+            localStorage.getItem("mtgCollection")
+        ) || [];
+
+} catch (error) {
+
+    console.error("Could not load collection:", error);
+
+    collection = [];
+
+}
+
+
+try {
+
+    decks =
+        JSON.parse(
+            localStorage.getItem("mtgDecks")
+        ) || [];
+
+} catch (error) {
+
+    console.error("Could not load decks:", error);
+
+    decks = [];
+
+}
 
 
 // ======================================================
@@ -59,21 +87,23 @@ function showPage(pageId) {
 
     const pages = [
         "searchPage",
+        "prebuiltPage",
         "collectionPage",
         "decksPage",
         "deckViewPage",
-        "prebuiltPage",
         "playPage"
     ];
 
 
-    pages.forEach(page => {
+    pages.forEach(function(page) {
 
         const element =
             document.getElementById(page);
 
         if (element) {
+
             element.classList.add("hidden");
+
         }
 
     });
@@ -82,27 +112,42 @@ function showPage(pageId) {
     const selectedPage =
         document.getElementById(pageId);
 
-    if (selectedPage) {
-        selectedPage.classList.remove("hidden");
+
+    if (!selectedPage) {
+
+        console.error(
+            "Page not found:",
+            pageId
+        );
+
+        return;
+
     }
 
 
-    // ------------------------------------------
-    // PAGE-SPECIFIC RENDERING
-    // ------------------------------------------
+    selectedPage.classList.remove("hidden");
+
+
+    // Page-specific rendering
 
     if (pageId === "collectionPage") {
+
         renderCollection();
+
     }
 
 
     if (pageId === "decksPage") {
+
         renderDecks();
+
     }
 
 
     if (pageId === "prebuiltPage") {
+
         renderPrebuiltDecks();
+
     }
 
 }
@@ -120,10 +165,17 @@ function openPlay() {
 
 
 // ======================================================
-// SEARCH
+// SEARCH ENTER KEY
 // ======================================================
 
 function handleSearchKey(event) {
+
+    if (!event) {
+
+        return;
+
+    }
+
 
     if (event.key === "Enter") {
 
@@ -134,6 +186,10 @@ function handleSearchKey(event) {
 }
 
 
+// ======================================================
+// SEARCH CARDS
+// ======================================================
+
 async function searchCards() {
 
     const inputElement =
@@ -142,49 +198,63 @@ async function searchCards() {
         );
 
 
-    if (!inputElement) {
-        return;
-    }
-
-
-    const input =
-        inputElement.value.trim();
-
-
-    if (!input) {
-        return;
-    }
-
-
     const results =
         document.getElementById(
             "searchResults"
         );
 
 
-    if (!results) {
+    if (!inputElement || !results) {
+
+        console.error(
+            "Search elements not found."
+        );
+
         return;
+
     }
 
 
-    results.innerHTML = `
-        <p>Searching...</p>
-    `;
+    const query =
+        inputElement.value.trim();
+
+
+    if (!query) {
+
+        results.innerHTML =
+            "<p>Enter a search query.</p>";
+
+        return;
+
+    }
+
+
+    results.innerHTML =
+        "<p>Searching...</p>";
 
 
     try {
 
+        const url =
+            MTG_PROXY +
+            "/api/cards/search?q=" +
+            encodeURIComponent(query);
+
+
+        console.log(
+            "Searching:",
+            url
+        );
+
+
         const response =
-            await fetch(
-                `${MTG_PROXY}/api/cards/search?q=` +
-                encodeURIComponent(input)
-            );
+            await fetch(url);
 
 
         if (!response.ok) {
 
             throw new Error(
-                "Scryfall search failed: " +
+                "Server returned " +
                 response.status
             );
 
@@ -207,9 +277,8 @@ async function searchCards() {
         );
 
 
-        results.innerHTML = `
-            <p>No cards found.</p>
-        `;
+        results.innerHTML =
+            "<p>Could not search cards.</p>";
 
     }
 
@@ -229,7 +298,9 @@ function displaySearchResults(data) {
 
 
     if (!results) {
+
         return;
+
     }
 
 
@@ -242,29 +313,30 @@ function displaySearchResults(data) {
         data.data.length === 0
     ) {
 
-        results.innerHTML = `
-            <p>No cards found.</p>
-        `;
+        results.innerHTML =
+            "<p>No cards found.</p>";
 
         return;
 
     }
 
 
-    data.data.forEach(card => {
+    data.data.forEach(function(card) {
 
         const imageUrl =
-            card.image_uris?.normal ||
-            card.card_faces?.[0]?.image_uris?.normal;
+            getCardImage(card);
 
 
         if (!imageUrl) {
+
             return;
+
         }
 
 
         const proxyImage =
-            `${MTG_PROXY}/api/cards/image?url=` +
+            MTG_PROXY +
+            "/api/cards/image?url=" +
             encodeURIComponent(imageUrl);
 
 
@@ -272,65 +344,53 @@ function displaySearchResults(data) {
             document.createElement("div");
 
 
-        element.className = "card";
+        element.className =
+            "card";
 
 
-        // ------------------------------------------
-        // DECK OPTIONS
-        // ------------------------------------------
+        // Deck dropdown
 
-        let deckOptions = `
-            <option value="">
-                Choose a deck...
-            </option>
-        `;
+        let deckOptions =
+            '<option value="">Choose a deck...</option>';
 
 
-        decks.forEach(deck => {
+        decks.forEach(function(deck) {
 
-            deckOptions += `
-                <option value="${escapeHTML(deck.id)}">
-                    ${escapeHTML(deck.name)}
-                </option>
-            `;
+            deckOptions +=
+                '<option value="' +
+                escapeHTML(deck.id) +
+                '">' +
+                escapeHTML(deck.name) +
+                "</option>";
 
         });
 
 
-        // ------------------------------------------
-        // CARD HTML
-        // ------------------------------------------
+        element.innerHTML =
+            '<img src="' +
+            proxyImage +
+            '" alt="' +
+            escapeHTML(card.name) +
+            '" loading="lazy">' +
 
-        element.innerHTML = `
+            "<h3>" +
+            escapeHTML(card.name) +
+            "</h3>" +
 
-            <img
-                src="${proxyImage}"
-                alt="${escapeHTML(card.name)}"
-                loading="lazy"
-            >
+            '<select class="deckSelect">' +
+            deckOptions +
+            "</select>" +
 
-            <h3>
-                ${escapeHTML(card.name)}
-            </h3>
+            '<button class="addDeckButton">' +
+            "Add to Deck" +
+            "</button>" +
 
-            <select class="deckSelect">
-                ${deckOptions}
-            </select>
-
-            <button class="addDeckButton">
-                Add to Deck
-            </button>
-
-            <button class="addCollectionButton">
-                Add to Collection
-            </button>
-
-        `;
+            '<button class="addCollectionButton">' +
+            "Add to Collection" +
+            "</button>";
 
 
-        // ------------------------------------------
-        // ADD TO DECK
-        // ------------------------------------------
+        // Add to deck
 
         const deckButton =
             element.querySelector(
@@ -340,7 +400,7 @@ function displaySearchResults(data) {
 
         deckButton.addEventListener(
             "click",
-            () => {
+            function() {
 
                 const select =
                     element.querySelector(
@@ -348,11 +408,7 @@ function displaySearchResults(data) {
                     );
 
 
-                const deckId =
-                    select.value;
-
-
-                if (!deckId) {
+                if (!select || !select.value) {
 
                     alert(
                         "Choose a deck first."
@@ -365,16 +421,14 @@ function displaySearchResults(data) {
 
                 addCardToDeck(
                     card,
-                    deckId
+                    select.value
                 );
 
             }
         );
 
 
-        // ------------------------------------------
-        // ADD TO COLLECTION
-        // ------------------------------------------
+        // Add to collection
 
         const collectionButton =
             element.querySelector(
@@ -384,7 +438,7 @@ function displaySearchResults(data) {
 
         collectionButton.addEventListener(
             "click",
-            () => {
+            function() {
 
                 addToCollection(card);
 
@@ -402,15 +456,57 @@ function displaySearchResults(data) {
 
 
 // ======================================================
+// GET CARD IMAGE
+// ======================================================
+
+function getCardImage(card) {
+
+    if (!card) {
+
+        return "";
+
+    }
+
+
+    if (
+        card.image_uris &&
+        card.image_uris.normal
+    ) {
+
+        return card.image_uris.normal;
+
+    }
+
+
+    if (
+        card.card_faces &&
+        card.card_faces.length > 0 &&
+        card.card_faces[0].image_uris &&
+        card.card_faces[0].image_uris.normal
+    ) {
+
+        return card.card_faces[0].image_uris.normal;
+
+    }
+
+
+    return "";
+
+}
+
+
+// ======================================================
 // COLLECTION
 // ======================================================
 
 function addToCollection(card) {
 
     const existing =
-        collection.find(
-            item => item.id === card.id
-        );
+        collection.find(function(item) {
+
+            return item.id === card.id;
+
+        });
 
 
     if (existing) {
@@ -427,9 +523,7 @@ function addToCollection(card) {
 
             name: card.name,
 
-            image:
-                card.image_uris?.normal ||
-                card.card_faces?.[0]?.image_uris?.normal,
+            image: getCardImage(card),
 
             amount: 1
 
@@ -442,7 +536,8 @@ function addToCollection(card) {
 
 
     alert(
-        `${card.name} added to your collection.`
+        card.name +
+        " added to your collection."
     );
 
 
@@ -460,7 +555,9 @@ function renderCollection() {
 
 
     if (!container) {
+
         return;
+
     }
 
 
@@ -469,64 +566,59 @@ function renderCollection() {
 
     if (collection.length === 0) {
 
-        container.innerHTML = `
-            <p>Your collection is empty.</p>
-        `;
+        container.innerHTML =
+            "<p>Your collection is empty.</p>";
 
         return;
 
     }
 
 
-    collection.forEach(card => {
+    collection.forEach(function(card) {
 
         const element =
             document.createElement("div");
 
 
-        element.className = "card";
+        element.className =
+            "card";
 
 
-        const image =
-            card.image || "";
+        let imageHTML = "";
 
 
-        const proxyImage =
-            image
-                ? `${MTG_PROXY}/api/cards/image?url=` +
-                  encodeURIComponent(image)
-                : "";
+        if (card.image) {
+
+            const proxyImage =
+                MTG_PROXY +
+                "/api/cards/image?url=" +
+                encodeURIComponent(card.image);
 
 
-        element.innerHTML = `
+            imageHTML =
+                '<img src="' +
+                proxyImage +
+                '" alt="' +
+                escapeHTML(card.name) +
+                '" loading="lazy">';
 
-            ${
-                proxyImage
-                    ? `
-                        <img
-                            src="${proxyImage}"
-                            alt="${escapeHTML(card.name)}"
-                            loading="lazy"
-                        >
-                    `
-                    : ""
-            }
+        }
 
-            <h3>
-                ${escapeHTML(card.name)}
-            </h3>
 
-            <p>
-                Quantity: ${card.amount}
-            </p>
+        element.innerHTML =
+            imageHTML +
 
-            <button
-                class="removeCollectionButton"
-            >
-                Remove One
-            </button>
+            "<h3>" +
+            escapeHTML(card.name) +
+            "</h3>" +
 
-        `;
+            "<p>Quantity: " +
+            card.amount +
+            "</p>" +
+
+            '<button class="removeCollectionButton">' +
+            "Remove One" +
+            "</button>";
 
 
         element
@@ -535,7 +627,7 @@ function renderCollection() {
             )
             .addEventListener(
                 "click",
-                () => {
+                function() {
 
                     removeFromCollection(
                         card.id
@@ -557,13 +649,17 @@ function renderCollection() {
 function removeFromCollection(id) {
 
     const card =
-        collection.find(
-            item => item.id === id
-        );
+        collection.find(function(item) {
+
+            return item.id === id;
+
+        });
 
 
     if (!card) {
+
         return;
+
     }
 
 
@@ -573,9 +669,11 @@ function removeFromCollection(id) {
     if (card.amount <= 0) {
 
         collection =
-            collection.filter(
-                item => item.id !== id
-            );
+            collection.filter(function(item) {
+
+                return item.id !== id;
+
+            });
 
     }
 
@@ -601,26 +699,24 @@ function createDeck() {
 
 
     if (!name || !name.trim()) {
+
         return;
+
     }
 
 
     const deck = {
 
-        id:
-            crypto.randomUUID(),
+        id: crypto.randomUUID(),
 
-        name:
-            name.trim(),
+        name: name.trim(),
 
         cards: []
 
     };
 
 
-    decks.push(
-        deck
-    );
+    decks.push(deck);
 
 
     saveDecks();
@@ -644,7 +740,9 @@ function renderDecks() {
 
 
     if (!container) {
+
         return;
+
     }
 
 
@@ -653,75 +751,80 @@ function renderDecks() {
 
     if (decks.length === 0) {
 
-        container.innerHTML = `
-            <p>
-                You don't have any decks yet.
-            </p>
-        `;
+        container.innerHTML =
+            "<p>You don't have any decks yet.</p>";
 
         return;
 
     }
 
 
-    decks.forEach(deck => {
+    decks.forEach(function(deck) {
 
         const element =
             document.createElement("div");
 
 
-        element.className = "deck";
+        element.className =
+            "deck";
+
+
+        if (!Array.isArray(deck.cards)) {
+
+            deck.cards = [];
+
+        }
 
 
         const cardCount =
-            Array.isArray(deck.cards)
-                ? deck.cards.reduce(
-                    (total, card) =>
-                        total + (card.amount || 0),
-                    0
-                )
-                : 0;
+            deck.cards.reduce(
+                function(total, card) {
+
+                    return total +
+                        Number(card.amount || 0);
+
+                },
+                0
+            );
 
 
-        element.innerHTML = `
+        let sourceHTML = "";
 
-            <h3>
-                ${escapeHTML(deck.name)}
-            </h3>
 
-            <p>
-                ${cardCount} cards
-            </p>
+        if (deck.source === "MTGJSON") {
 
-            ${
-                deck.source === "MTGJSON"
-                    ? `
-                        <p>
-                            <small>
-                                Prebuilt Deck
-                            </small>
-                        </p>
-                    `
-                    : ""
-            }
+            sourceHTML =
+                "<p><small>Prebuilt Deck</small></p>";
 
-            <div class="deckButtons">
+        }
 
-                <button class="openButton">
-                    Open
-                </button>
 
-                <button class="renameButton">
-                    Rename
-                </button>
+        element.innerHTML =
+            "<h3>" +
+            escapeHTML(deck.name) +
+            "</h3>" +
 
-                <button class="deleteButton">
-                    Delete
-                </button>
+            "<p>" +
+            cardCount +
+            " cards</p>" +
 
-            </div>
+            sourceHTML +
 
-        `;
+            '<div class="deckButtons">' +
+
+            '<button class="openButton">' +
+            "Open" +
+            "</button>" +
+
+            '<button class="renameButton">' +
+            "Rename" +
+            "</button>" +
+
+            '<button class="deleteButton">' +
+            "Delete" +
+            "</button>" +
+
+            "</div>";
 
 
         element
@@ -730,7 +833,7 @@ function renderDecks() {
             )
             .addEventListener(
                 "click",
-                () => {
+                function() {
 
                     openDeck(
                         deck.id
@@ -746,7 +849,7 @@ function renderDecks() {
             )
             .addEventListener(
                 "click",
-                () => {
+                function() {
 
                     renameDeck(
                         deck.id
@@ -762,7 +865,7 @@ function renderDecks() {
             )
             .addEventListener(
                 "click",
-                () => {
+                function() {
 
                     deleteDeck(
                         deck.id
@@ -791,16 +894,17 @@ function addCardToDeck(
 ) {
 
     const deck =
-        decks.find(
-            deck => deck.id === deckId
-        );
+        decks.find(function(deck) {
+
+            return deck.id === deckId;
+
+        });
 
 
     if (!deck) {
 
-        console.error(
-            "Deck not found:",
-            deckId
+        alert(
+            "Deck not found."
         );
 
         return;
@@ -809,14 +913,18 @@ function addCardToDeck(
 
 
     if (!Array.isArray(deck.cards)) {
+
         deck.cards = [];
+
     }
 
 
     const existing =
-        deck.cards.find(
-            item => item.id === card.id
-        );
+        deck.cards.find(function(item) {
+
+            return item.id === card.id;
+
+        });
 
 
     if (existing) {
@@ -833,9 +941,7 @@ function addCardToDeck(
 
             name: card.name,
 
-            image:
-                card.image_uris?.normal ||
-                card.card_faces?.[0]?.image_uris?.normal,
+            image: getCardImage(card),
 
             amount: 1
 
@@ -848,7 +954,10 @@ function addCardToDeck(
 
 
     alert(
-        `${card.name} added to ${deck.name}.`
+        card.name +
+        " added to " +
+        deck.name +
+        "."
     );
 
 
@@ -864,13 +973,17 @@ function addCardToDeck(
 function openDeck(deckId) {
 
     const deck =
-        decks.find(
-            deck => deck.id === deckId
-        );
+        decks.find(function(deck) {
+
+            return deck.id === deckId;
+
+        });
 
 
     if (!deck) {
+
         return;
+
     }
 
 
@@ -887,7 +1000,9 @@ function openDeck(deckId) {
 
 
     if (!title || !container) {
+
         return;
+
     }
 
 
@@ -903,9 +1018,8 @@ function openDeck(deckId) {
         deck.cards.length === 0
     ) {
 
-        container.innerHTML = `
-            <p>This deck is empty.</p>
-        `;
+        container.innerHTML =
+            "<p>This deck is empty.</p>";
 
         showPage(
             "deckViewPage"
@@ -916,55 +1030,51 @@ function openDeck(deckId) {
     }
 
 
-    deck.cards.forEach(card => {
+    deck.cards.forEach(function(card) {
 
         const element =
             document.createElement("div");
 
 
-        element.className = "card";
+        element.className =
+            "card";
 
 
-        const image =
-            card.image || "";
+        let imageHTML = "";
 
 
-        const proxyImage =
-            image
-                ? `${MTG_PROXY}/api/cards/image?url=` +
-                  encodeURIComponent(image)
-                : "";
+        if (card.image) {
+
+            const proxyImage =
+                MTG_PROXY +
+                "/api/cards/image?url=" +
+                encodeURIComponent(card.image);
 
 
-        element.innerHTML = `
+            imageHTML =
+                '<img src="' +
+                proxyImage +
+                '" alt="' +
+                escapeHTML(card.name) +
+                '" loading="lazy">';
 
-            ${
-                proxyImage
-                    ? `
-                        <img
-                            src="${proxyImage}"
-                            alt="${escapeHTML(card.name)}"
-                            loading="lazy"
-                        >
-                    `
-                    : ""
-            }
+        }
 
-            <h3>
-                ${escapeHTML(card.name)}
-            </h3>
 
-            <p>
-                Quantity: ${card.amount}
-            </p>
+        element.innerHTML =
+            imageHTML +
 
-            <button
-                class="removeDeckCardButton"
-            >
-                Remove One
-            </button>
+            "<h3>" +
+            escapeHTML(card.name) +
+            "</h3>" +
 
-        `;
+            "<p>Quantity: " +
+            card.amount +
+            "</p>" +
+
+            '<button class="removeDeckCardButton">' +
+            "Remove One" +
+            "</button>";
 
 
         element
@@ -973,7 +1083,7 @@ function openDeck(deckId) {
             )
             .addEventListener(
                 "click",
-                () => {
+                function() {
 
                     removeCardFromDeck(
                         deck.id,
@@ -1008,24 +1118,32 @@ function removeCardFromDeck(
 ) {
 
     const deck =
-        decks.find(
-            deck => deck.id === deckId
-        );
+        decks.find(function(deck) {
+
+            return deck.id === deckId;
+
+        });
 
 
     if (!deck) {
+
         return;
+
     }
 
 
     const card =
-        deck.cards.find(
-            item => item.id === cardId
-        );
+        deck.cards.find(function(item) {
+
+            return item.id === cardId;
+
+        });
 
 
     if (!card) {
+
         return;
+
     }
 
 
@@ -1035,9 +1153,11 @@ function removeCardFromDeck(
     if (card.amount <= 0) {
 
         deck.cards =
-            deck.cards.filter(
-                item => item.id !== cardId
-            );
+            deck.cards.filter(function(item) {
+
+                return item.id !== cardId;
+
+            });
 
     }
 
@@ -1059,13 +1179,17 @@ function removeCardFromDeck(
 function renameDeck(deckId) {
 
     const deck =
-        decks.find(
-            deck => deck.id === deckId
-        );
+        decks.find(function(deck) {
+
+            return deck.id === deckId;
+
+        });
 
 
     if (!deck) {
+
         return;
+
     }
 
 
@@ -1076,10 +1200,7 @@ function renameDeck(deckId) {
         );
 
 
-    if (
-        !newName ||
-        !newName.trim()
-    ) {
+    if (!newName || !newName.trim()) {
 
         return;
 
@@ -1105,31 +1226,41 @@ function renameDeck(deckId) {
 function deleteDeck(deckId) {
 
     const deck =
-        decks.find(
-            deck => deck.id === deckId
-        );
+        decks.find(function(deck) {
+
+            return deck.id === deckId;
+
+        });
 
 
     if (!deck) {
+
         return;
+
     }
 
 
     const confirmed =
         confirm(
-            `Delete "${deck.name}"?`
+            'Delete "' +
+            deck.name +
+            '"?'
         );
 
 
     if (!confirmed) {
+
         return;
+
     }
 
 
     decks =
-        decks.filter(
-            deck => deck.id !== deckId
-        );
+        decks.filter(function(deck) {
+
+            return deck.id !== deckId;
+
+        });
 
 
     saveDecks();
@@ -1149,14 +1280,13 @@ function deleteDeck(deckId) {
 //
 // BELANGRIJK:
 //
-// Hier staan alleen de gegevens om de decks
-// op de Prebuilt-pagina te tonen.
+// Hier staan ALLEEN metadata.
 //
-// De kaarten zelf worden NIET hier geladen.
+// Er worden bij het openen van deze pagina
+// geen decklists geladen.
 //
-// Pas wanneer de gebruiker op
-// "Add to My Decks" klikt wordt de decklist
-// van de server opgehaald.
+// De volledige decklist wordt pas opgehaald
+// wanneer de speler op "Add to My Decks" klikt.
 //
 // ======================================================
 
@@ -1180,7 +1310,6 @@ const prebuiltDecks = [
         type:
             "preconstructed"
     },
-
 
     {
         id: "complex-commander",
@@ -1217,109 +1346,132 @@ function renderPrebuiltDecks() {
 
 
     if (!container) {
+
         return;
+
     }
 
 
     container.innerHTML = "";
 
 
-    prebuiltDecks.forEach(
-        prebuilt => {
+    prebuiltDecks.forEach(function(prebuilt) {
 
-            const element =
-                document.createElement(
-                    "div"
-                );
+        const element =
+            document.createElement("div");
 
 
-            element.className =
-                "deck";
+        element.className =
+            "deck";
 
 
-            const alreadyAdded =
-                decks.some(
-                    deck =>
-                        deck.prebuiltId ===
-                        prebuilt.id
-                );
+        const alreadyAdded =
+            decks.some(function(deck) {
+
+                return deck.prebuiltId ===
+                    prebuilt.id;
+
+            });
 
 
-            element.innerHTML = `
-
-                <h3>
-                    ${escapeHTML(prebuilt.name)}
-                </h3>
-
-                <p>
-                    ${escapeHTML(prebuilt.description)}
-                </p>
-
-                <p>
-                    <strong>
-                        Difficulty:
-                    </strong>
-
-                    ${escapeHTML(prebuilt.difficulty)}
-                </p>
-
-                <p>
-                    <strong>
-                        Color:
-                    </strong>
-
-                    ${escapeHTML(prebuilt.color)}
-                </p>
-
-                <button
-                    class="addPrebuiltButton"
-                    ${alreadyAdded ? "disabled" : ""}
-                >
-                    ${
-                        alreadyAdded
-                            ? "Already Added"
-                            : "Add to My Decks"
-                    }
-                </button>
-
-            `;
+        let buttonText =
+            "Add to My Decks";
 
 
-            const button =
-                element.querySelector(
-                    ".addPrebuiltButton"
-                );
+        if (alreadyAdded) {
+
+            buttonText =
+                "Already Added";
+
+        }
 
 
-            if (!alreadyAdded) {
-
-                button.addEventListener(
-                    "click",
-                    () => {
-
-                        addPrebuiltDeck(
-                            prebuilt,
-                            button
-                        );
-
-                    }
-                );
-
-            }
+        let disabled =
+            "";
 
 
-            container.appendChild(
-                element
+        if (alreadyAdded) {
+
+            disabled =
+                " disabled";
+
+        }
+
+
+        element.innerHTML =
+            "<h3>" +
+            escapeHTML(prebuilt.name) +
+            "</h3>" +
+
+            "<p>" +
+            escapeHTML(prebuilt.description) +
+            "</p>" +
+
+            "<p><strong>Difficulty:</strong> " +
+            escapeHTML(prebuilt.difficulty) +
+            "</p>" +
+
+            "<p><strong>Color:</strong> " +
+            escapeHTML(prebuilt.color) +
+            "</p>" +
+
+            '<button class="addPrebuiltButton"' +
+            disabled +
+            ">" +
+            buttonText +
+            "</button>";
+
+
+        const button =
+            element.querySelector(
+                ".addPrebuiltButton"
+            );
+
+
+        if (!alreadyAdded) {
+
+            button.addEventListener(
+                "click",
+                function() {
+
+                    addPrebuiltDeck(
+                        prebuilt,
+                        button
+                    );
+
+                }
             );
 
         }
-    );
+
+
+        container.appendChild(
+            element
+        );
+
+    });
 
 }
 
 
 // ======================================================
 // ADD PREBUILT DECK
+// ======================================================
+//
+// ALLEEN HET GESELECTEERDE DECK WORDT GELADEN.
+//
+// Dus:
+//
+// openen Prebuilt Decks
+//        ↓
+// alleen metadata
+//        ↓
+// klik Add
+//        ↓
+// server haalt één decklist
+//        ↓
+// opslaan in localStorage
+//
 // ======================================================
 
 async function addPrebuiltDeck(
@@ -1328,11 +1480,12 @@ async function addPrebuiltDeck(
 ) {
 
     const alreadyExists =
-        decks.some(
-            deck =>
-                deck.prebuiltId ===
-                prebuilt.id
-        );
+        decks.some(function(deck) {
+
+            return deck.prebuiltId ===
+                prebuilt.id;
+
+        });
 
 
     if (alreadyExists) {
@@ -1364,19 +1517,23 @@ async function addPrebuiltDeck(
         );
 
 
-        const response =
-            await fetch(
-                `${MTG_PROXY}/api/prebuilt-decks/` +
-                encodeURIComponent(
-                    prebuilt.mtgjsonName
-                )
+        const url =
+            MTG_PROXY +
+            "/api/prebuilt-decks/" +
+            encodeURIComponent(
+                prebuilt.mtgjsonName
             );
+
+
+        const response =
+            await fetch(url);
 
 
         if (!response.ok) {
 
             throw new Error(
-                `Server returned ${response.status}`
+                "Server returned " +
+                response.status
             );
 
         }
@@ -1387,7 +1544,7 @@ async function addPrebuiltDeck(
 
 
         if (
-            !data.cards ||
+            !data ||
             !Array.isArray(data.cards)
         ) {
 
@@ -1431,12 +1588,12 @@ async function addPrebuiltDeck(
 
         renderDecks();
 
-
         renderPrebuiltDecks();
 
 
         alert(
-            `${prebuilt.name} was added to your decks.`
+            prebuilt.name +
+            " was added to your decks."
         );
 
     }
@@ -1482,7 +1639,7 @@ function escapeHTML(value) {
 
 
     div.textContent =
-        String(value ?? "");
+        String(value || "");
 
 
     return div.innerHTML;
@@ -1494,6 +1651,11 @@ function escapeHTML(value) {
 // STARTUP
 // ======================================================
 
+console.log(
+    "Starting MTG app..."
+);
+
+
 renderCollection();
 
 renderDecks();
@@ -1501,11 +1663,6 @@ renderDecks();
 renderPrebuiltDecks();
 
 
-// ======================================================
-// DEBUG
-// ======================================================
-
 console.log(
     "MTG app.js loaded successfully."
 );
-```
