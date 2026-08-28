@@ -395,9 +395,6 @@ if (card.image) {
         );
 
 
-    // Gebruik Render proxy zodat
-    // de browser Scryfall niet direct
-    // hoeft te bereiken.
     image.src =
         getCardImage(card);
 
@@ -426,11 +423,12 @@ if (card.image) {
         image
     );
 
-}
-    } else {
+} else {
 
-        element.textContent =
-            card.name;
+    element.textContent =
+        card.name;
+
+}
 
     }
 
