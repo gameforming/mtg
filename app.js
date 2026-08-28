@@ -1,6 +1,15 @@
+```javascript
 // ======================================================
 // MTG GAME - APP.JS
 // ======================================================
+
+
+// ======================================================
+// CONFIG
+// ======================================================
+
+const MTG_PROXY =
+    "https://mtg-scryfall-proxy.onrender.com";
 
 
 // ======================================================
@@ -8,191 +17,15 @@
 // ======================================================
 
 let collection =
-    JSON.parse(localStorage.getItem("mtgCollection")) || [];
+    JSON.parse(
+        localStorage.getItem("mtgCollection")
+    ) || [];
 
 let decks =
-    JSON.parse(localStorage.getItem("mtgDecks")) || [];
-// ======================================================
-// DEFAULT PRECON DECKS
-// ======================================================
+    JSON.parse(
+        localStorage.getItem("mtgDecks")
+    ) || [];
 
-function createDefaultPrecons() {
-
-    // Alleen aanmaken als de gebruiker nog geen decks heeft.
-    if (decks.length > 0) {
-        return;
-    }
-
-
-    // ==================================================
-    // EASY PRECON
-    // ==================================================
-
-    const easyPrecon = {
-
-        id: crypto.randomUUID(),
-
-        name: "Easy - White Creatures",
-
-        difficulty: "Easy",
-
-        cards: [
-
-            {
-                id: "5f2a5a91-3f9d-4c2e-bc3d-7f8f6c6b8c8a",
-                name: "Plains",
-                image: "",
-                amount: 20
-            },
-
-            {
-                id: "00000000-0000-0000-0000-000000000001",
-                name: "Elite Vanguard",
-                image: "",
-                amount: 4
-            },
-
-            {
-                id: "00000000-0000-0000-0000-000000000002",
-                name: "Savannah Lions",
-                image: "",
-                amount: 4
-            },
-
-            {
-                id: "00000000-0000-0000-0000-000000000003",
-                name: "Serra Angel",
-                image: "",
-                amount: 4
-            },
-
-            {
-                id: "00000000-0000-0000-0000-000000000004",
-                name: "Pacifism",
-                image: "",
-                amount: 4
-            },
-
-            {
-                id: "00000000-0000-0000-0000-000000000005",
-                name: "Raise the Alarm",
-                image: "",
-                amount: 4
-            },
-
-            {
-                id: "00000000-0000-0000-0000-000000000006",
-                name: "Giant Growth",
-                image: "",
-                amount: 4
-            }
-
-        ]
-
-    };
-
-
-    // ==================================================
-    // DIFFICULT PRECON
-    // ==================================================
-
-    const difficultPrecon = {
-
-        id: crypto.randomUUID(),
-
-        name: "Difficult - Graveyard Commander",
-
-        difficulty: "Difficult",
-
-        cards: [
-
-            {
-                id: "5f2a5a91-3f9d-4c2e-bc3d-7f8f6c6b8c8a",
-                name: "Swamp",
-                image: "",
-                amount: 18
-            },
-
-            {
-                id: "00000000-0000-0000-0000-000000000010",
-                name: "Command Tower",
-                image: "",
-                amount: 1
-            },
-
-            {
-                id: "00000000-0000-0000-0000-000000000011",
-                name: "Midnight Reaper",
-                image: "",
-                amount: 3
-            },
-
-            {
-                id: "00000000-0000-0000-0000-000000000012",
-                name: "Cemetery Reaper",
-                image: "",
-                amount: 3
-            },
-
-            {
-                id: "00000000-0000-0000-0000-000000000013",
-                name: "God-Eternal Oketra",
-                image: "",
-                amount: 2
-            },
-
-            {
-                id: "00000000-0000-0000-0000-000000000014",
-                name: "Liliana, Death's Majesty",
-                image: "",
-                amount: 2
-            },
-
-            {
-                id: "00000000-0000-0000-0000-000000000015",
-                name: "Prophet of the Scarab",
-                image: "",
-                amount: 3
-            },
-
-            {
-                id: "00000000-0000-0000-0000-000000000016",
-                name: "Cursecloth Wrappings",
-                image: "",
-                amount: 3
-            },
-
-            {
-                id: "00000000-0000-0000-0000-000000000017",
-                name: "Accursed Duneyard",
-                image: "",
-                amount: 4
-            }
-
-        ]
-
-    };
-
-
-    decks.push(
-        easyPrecon
-    );
-
-    decks.push(
-        difficultPrecon
-    );
-
-
-    saveDecks();
-
-}
-
-
-// ======================================================
-// CREATE DEFAULT PRECONS
-// ======================================================
-
-createDefaultPrecons();
 
 // ======================================================
 // STORAGE
@@ -228,8 +61,11 @@ function showPage(pageId) {
         "searchPage",
         "collectionPage",
         "decksPage",
-        "deckViewPage"
+        "deckViewPage",
+        "prebuiltPage",
+        "playPage"
     ];
+
 
     pages.forEach(page => {
 
@@ -251,6 +87,10 @@ function showPage(pageId) {
     }
 
 
+    // ------------------------------------------
+    // PAGE-SPECIFIC RENDERING
+    // ------------------------------------------
+
     if (pageId === "collectionPage") {
         renderCollection();
     }
@@ -259,6 +99,22 @@ function showPage(pageId) {
     if (pageId === "decksPage") {
         renderDecks();
     }
+
+
+    if (pageId === "prebuiltPage") {
+        renderPrebuiltDecks();
+    }
+
+}
+
+
+// ======================================================
+// PLAY
+// ======================================================
+
+function openPlay() {
+
+    showPage("playPage");
 
 }
 
@@ -270,7 +126,9 @@ function showPage(pageId) {
 function handleSearchKey(event) {
 
     if (event.key === "Enter") {
+
         searchCards();
+
     }
 
 }
@@ -278,11 +136,19 @@ function handleSearchKey(event) {
 
 async function searchCards() {
 
+    const inputElement =
+        document.getElementById(
+            "searchInput"
+        );
+
+
+    if (!inputElement) {
+        return;
+    }
+
+
     const input =
-        document
-            .getElementById("searchInput")
-            .value
-            .trim();
+        inputElement.value.trim();
 
 
     if (!input) {
@@ -296,6 +162,11 @@ async function searchCards() {
         );
 
 
+    if (!results) {
+        return;
+    }
+
+
     results.innerHTML = `
         <p>Searching...</p>
     `;
@@ -303,18 +174,20 @@ async function searchCards() {
 
     try {
 
-        const SCRYFALL_PROXY =
-            "https://mtg-scryfall-proxy.onrender.com";
-
         const response =
             await fetch(
-                `${SCRYFALL_PROXY}/api/cards/search?q=` +
+                `${MTG_PROXY}/api/cards/search?q=` +
                 encodeURIComponent(input)
             );
+
+
         if (!response.ok) {
+
             throw new Error(
-                "Scryfall search failed"
+                "Scryfall search failed: " +
+                response.status
             );
+
         }
 
 
@@ -324,10 +197,14 @@ async function searchCards() {
 
         displaySearchResults(data);
 
+    }
 
-    } catch (error) {
+    catch (error) {
 
-        console.error(error);
+        console.error(
+            "Search error:",
+            error
+        );
 
 
         results.innerHTML = `
@@ -343,66 +220,53 @@ async function searchCards() {
 // DISPLAY SEARCH RESULTS
 // ======================================================
 
-// ======================================================
-// DISPLAY SEARCH RESULTS
-// ======================================================
-
 function displaySearchResults(data) {
 
-    const SCRYFALL_PROXY =
-        "https://mtg-scryfall-proxy.onrender.com";
-
     const results =
-        document.getElementById("searchResults");
+        document.getElementById(
+            "searchResults"
+        );
+
+
+    if (!results) {
+        return;
+    }
 
 
     results.innerHTML = "";
 
 
-    // ------------------------------------------
-    // NO RESULTS
-    // ------------------------------------------
-
-    if (!data.data || data.data.length === 0) {
+    if (
+        !data ||
+        !Array.isArray(data.data) ||
+        data.data.length === 0
+    ) {
 
         results.innerHTML = `
             <p>No cards found.</p>
         `;
 
         return;
+
     }
 
 
-    // ------------------------------------------
-    // DISPLAY EVERY CARD
-    // ------------------------------------------
-
     data.data.forEach(card => {
 
-        // Get image from normal cards
-        // or double-faced cards
         const imageUrl =
             card.image_uris?.normal ||
             card.card_faces?.[0]?.image_uris?.normal;
 
 
-        // Skip cards without an image
         if (!imageUrl) {
             return;
         }
 
 
-        // ------------------------------------------
-        // PROXY IMAGE
-        // ------------------------------------------
-
         const proxyImage =
-            `${SCRYFALL_PROXY}/api/cards/image?url=${encodeURIComponent(imageUrl)}`;
+            `${MTG_PROXY}/api/cards/image?url=` +
+            encodeURIComponent(imageUrl);
 
-
-        // ------------------------------------------
-        // CARD ELEMENT
-        // ------------------------------------------
 
         const element =
             document.createElement("div");
@@ -412,7 +276,7 @@ function displaySearchResults(data) {
 
 
         // ------------------------------------------
-        // CREATE DECK DROPDOWN
+        // DECK OPTIONS
         // ------------------------------------------
 
         let deckOptions = `
@@ -450,9 +314,7 @@ function displaySearchResults(data) {
             </h3>
 
             <select class="deckSelect">
-
                 ${deckOptions}
-
             </select>
 
             <button class="addDeckButton">
@@ -480,10 +342,14 @@ function displaySearchResults(data) {
             "click",
             () => {
 
+                const select =
+                    element.querySelector(
+                        ".deckSelect"
+                    );
+
+
                 const deckId =
-                    element
-                        .querySelector(".deckSelect")
-                        .value;
+                    select.value;
 
 
                 if (!deckId) {
@@ -493,6 +359,7 @@ function displaySearchResults(data) {
                     );
 
                     return;
+
                 }
 
 
@@ -525,11 +392,9 @@ function displaySearchResults(data) {
         );
 
 
-        // ------------------------------------------
-        // ADD CARD TO RESULTS
-        // ------------------------------------------
-
-        results.appendChild(element);
+        results.appendChild(
+            element
+        );
 
     });
 
@@ -552,7 +417,9 @@ function addToCollection(card) {
 
         existing.amount++;
 
-    } else {
+    }
+
+    else {
 
         collection.push({
 
@@ -620,12 +487,30 @@ function renderCollection() {
         element.className = "card";
 
 
+        const image =
+            card.image || "";
+
+
+        const proxyImage =
+            image
+                ? `${MTG_PROXY}/api/cards/image?url=` +
+                  encodeURIComponent(image)
+                : "";
+
+
         element.innerHTML = `
 
-            <img
-                src="${card.image}"
-                alt="${escapeHTML(card.name)}"
-            >
+            ${
+                proxyImage
+                    ? `
+                        <img
+                            src="${proxyImage}"
+                            alt="${escapeHTML(card.name)}"
+                            loading="lazy"
+                        >
+                    `
+                    : ""
+            }
 
             <h3>
                 ${escapeHTML(card.name)}
@@ -660,7 +545,9 @@ function renderCollection() {
             );
 
 
-        container.appendChild(element);
+        container.appendChild(
+            element
+        );
 
     });
 
@@ -702,7 +589,7 @@ function removeFromCollection(id) {
 
 
 // ======================================================
-// DECK CREATION
+// CREATE DECK
 // ======================================================
 
 function createDeck() {
@@ -720,16 +607,20 @@ function createDeck() {
 
     const deck = {
 
-        id: crypto.randomUUID(),
+        id:
+            crypto.randomUUID(),
 
-        name: name.trim(),
+        name:
+            name.trim(),
 
         cards: []
 
     };
 
 
-    decks.push(deck);
+    decks.push(
+        deck
+    );
 
 
     saveDecks();
@@ -783,11 +674,13 @@ function renderDecks() {
 
 
         const cardCount =
-            deck.cards.reduce(
-                (total, card) =>
-                    total + card.amount,
-                0
-            );
+            Array.isArray(deck.cards)
+                ? deck.cards.reduce(
+                    (total, card) =>
+                        total + (card.amount || 0),
+                    0
+                )
+                : 0;
 
 
         element.innerHTML = `
@@ -799,6 +692,18 @@ function renderDecks() {
             <p>
                 ${cardCount} cards
             </p>
+
+            ${
+                deck.source === "MTGJSON"
+                    ? `
+                        <p>
+                            <small>
+                                Prebuilt Deck
+                            </small>
+                        </p>
+                    `
+                    : ""
+            }
 
             <div class="deckButtons">
 
@@ -819,49 +724,57 @@ function renderDecks() {
         `;
 
 
-        // OPEN
-
         element
-            .querySelector(".openButton")
+            .querySelector(
+                ".openButton"
+            )
             .addEventListener(
                 "click",
                 () => {
 
-                    openDeck(deck.id);
+                    openDeck(
+                        deck.id
+                    );
 
                 }
             );
 
 
-        // RENAME
-
         element
-            .querySelector(".renameButton")
+            .querySelector(
+                ".renameButton"
+            )
             .addEventListener(
                 "click",
                 () => {
 
-                    renameDeck(deck.id);
+                    renameDeck(
+                        deck.id
+                    );
 
                 }
             );
 
 
-        // DELETE
-
         element
-            .querySelector(".deleteButton")
+            .querySelector(
+                ".deleteButton"
+            )
             .addEventListener(
                 "click",
                 () => {
 
-                    deleteDeck(deck.id);
+                    deleteDeck(
+                        deck.id
+                    );
 
                 }
             );
 
 
-        container.appendChild(element);
+        container.appendChild(
+            element
+        );
 
     });
 
@@ -895,11 +808,9 @@ function addCardToDeck(
     }
 
 
-    // IMPORTANT:
-    // We DO NOT check the collection.
-    //
-    // A player can add ANY card from
-    // the search results to ANY deck.
+    if (!Array.isArray(deck.cards)) {
+        deck.cards = [];
+    }
 
 
     const existing =
@@ -912,7 +823,9 @@ function addCardToDeck(
 
         existing.amount++;
 
-    } else {
+    }
+
+    else {
 
         deck.cards.push({
 
@@ -961,11 +874,10 @@ function openDeck(deckId) {
     }
 
 
-    document
-        .getElementById(
+    const title =
+        document.getElementById(
             "deckViewTitle"
-        )
-        .textContent = deck.name;
+        );
 
 
     const container =
@@ -974,16 +886,30 @@ function openDeck(deckId) {
         );
 
 
+    if (!title || !container) {
+        return;
+    }
+
+
+    title.textContent =
+        deck.name;
+
+
     container.innerHTML = "";
 
 
-    if (deck.cards.length === 0) {
+    if (
+        !Array.isArray(deck.cards) ||
+        deck.cards.length === 0
+    ) {
 
         container.innerHTML = `
             <p>This deck is empty.</p>
         `;
 
-        showPage("deckViewPage");
+        showPage(
+            "deckViewPage"
+        );
 
         return;
 
@@ -999,12 +925,30 @@ function openDeck(deckId) {
         element.className = "card";
 
 
+        const image =
+            card.image || "";
+
+
+        const proxyImage =
+            image
+                ? `${MTG_PROXY}/api/cards/image?url=` +
+                  encodeURIComponent(image)
+                : "";
+
+
         element.innerHTML = `
 
-            <img
-                src="${card.image}"
-                alt="${escapeHTML(card.name)}"
-            >
+            ${
+                proxyImage
+                    ? `
+                        <img
+                            src="${proxyImage}"
+                            alt="${escapeHTML(card.name)}"
+                            loading="lazy"
+                        >
+                    `
+                    : ""
+            }
 
             <h3>
                 ${escapeHTML(card.name)}
@@ -1014,7 +958,9 @@ function openDeck(deckId) {
                 Quantity: ${card.amount}
             </p>
 
-            <button class="removeDeckCardButton">
+            <button
+                class="removeDeckCardButton"
+            >
                 Remove One
             </button>
 
@@ -1038,12 +984,16 @@ function openDeck(deckId) {
             );
 
 
-        container.appendChild(element);
+        container.appendChild(
+            element
+        );
 
     });
 
 
-    showPage("deckViewPage");
+    showPage(
+        "deckViewPage"
+    );
 
 }
 
@@ -1095,7 +1045,9 @@ function removeCardFromDeck(
     saveDecks();
 
 
-    openDeck(deckId);
+    openDeck(
+        deckId
+    );
 
 }
 
@@ -1124,8 +1076,13 @@ function renameDeck(deckId) {
         );
 
 
-    if (!newName || !newName.trim()) {
+    if (
+        !newName ||
+        !newName.trim()
+    ) {
+
         return;
+
     }
 
 
@@ -1180,6 +1137,335 @@ function deleteDeck(deckId) {
 
     renderDecks();
 
+
+    renderPrebuiltDecks();
+
+}
+
+
+// ======================================================
+// PREBUILT DECK METADATA
+// ======================================================
+//
+// BELANGRIJK:
+//
+// Hier staan alleen de gegevens om de decks
+// op de Prebuilt-pagina te tonen.
+//
+// De kaarten zelf worden NIET hier geladen.
+//
+// Pas wanneer de gebruiker op
+// "Add to My Decks" klikt wordt de decklist
+// van de server opgehaald.
+//
+// ======================================================
+
+const prebuiltDecks = [
+
+    {
+        id: "easy-starter",
+
+        name: "Easy Starter Deck",
+
+        description:
+            "Een eenvoudig deck voor spelers die Magic willen leren.",
+
+        difficulty: "Easy",
+
+        color: "White",
+
+        mtgjsonName:
+            "Boros Convoke",
+
+        type:
+            "preconstructed"
+    },
+
+
+    {
+        id: "complex-commander",
+
+        name: "Complex Commander Deck",
+
+        description:
+            "Een moeilijk Commander deck met veel interactie en lastige keuzes.",
+
+        difficulty: "Hard",
+
+        color: "Esper",
+
+        mtgjsonName:
+            "Endless Punishment",
+
+        type:
+            "preconstructed"
+    }
+
+];
+
+
+// ======================================================
+// RENDER PREBUILT DECKS
+// ======================================================
+
+function renderPrebuiltDecks() {
+
+    const container =
+        document.getElementById(
+            "prebuiltDecks"
+        );
+
+
+    if (!container) {
+        return;
+    }
+
+
+    container.innerHTML = "";
+
+
+    prebuiltDecks.forEach(
+        prebuilt => {
+
+            const element =
+                document.createElement(
+                    "div"
+                );
+
+
+            element.className =
+                "deck";
+
+
+            const alreadyAdded =
+                decks.some(
+                    deck =>
+                        deck.prebuiltId ===
+                        prebuilt.id
+                );
+
+
+            element.innerHTML = `
+
+                <h3>
+                    ${escapeHTML(prebuilt.name)}
+                </h3>
+
+                <p>
+                    ${escapeHTML(prebuilt.description)}
+                </p>
+
+                <p>
+                    <strong>
+                        Difficulty:
+                    </strong>
+
+                    ${escapeHTML(prebuilt.difficulty)}
+                </p>
+
+                <p>
+                    <strong>
+                        Color:
+                    </strong>
+
+                    ${escapeHTML(prebuilt.color)}
+                </p>
+
+                <button
+                    class="addPrebuiltButton"
+                    ${alreadyAdded ? "disabled" : ""}
+                >
+                    ${
+                        alreadyAdded
+                            ? "Already Added"
+                            : "Add to My Decks"
+                    }
+                </button>
+
+            `;
+
+
+            const button =
+                element.querySelector(
+                    ".addPrebuiltButton"
+                );
+
+
+            if (!alreadyAdded) {
+
+                button.addEventListener(
+                    "click",
+                    () => {
+
+                        addPrebuiltDeck(
+                            prebuilt,
+                            button
+                        );
+
+                    }
+                );
+
+            }
+
+
+            container.appendChild(
+                element
+            );
+
+        }
+    );
+
+}
+
+
+// ======================================================
+// ADD PREBUILT DECK
+// ======================================================
+
+async function addPrebuiltDeck(
+    prebuilt,
+    button
+) {
+
+    const alreadyExists =
+        decks.some(
+            deck =>
+                deck.prebuiltId ===
+                prebuilt.id
+        );
+
+
+    if (alreadyExists) {
+
+        alert(
+            "This prebuilt deck is already in your decks."
+        );
+
+        return;
+
+    }
+
+
+    if (button) {
+
+        button.disabled = true;
+
+        button.textContent =
+            "Loading decklist...";
+
+    }
+
+
+    try {
+
+        console.log(
+            "Loading prebuilt deck:",
+            prebuilt.name
+        );
+
+
+        const response =
+            await fetch(
+                `${MTG_PROXY}/api/prebuilt-decks/` +
+                encodeURIComponent(
+                    prebuilt.mtgjsonName
+                )
+            );
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                `Server returned ${response.status}`
+            );
+
+        }
+
+
+        const data =
+            await response.json();
+
+
+        if (
+            !data.cards ||
+            !Array.isArray(data.cards)
+        ) {
+
+            throw new Error(
+                "Invalid deck data."
+            );
+
+        }
+
+
+        const deck = {
+
+            id:
+                crypto.randomUUID(),
+
+            name:
+                prebuilt.name,
+
+            prebuiltId:
+                prebuilt.id,
+
+            difficulty:
+                prebuilt.difficulty,
+
+            source:
+                "MTGJSON",
+
+            cards:
+                data.cards
+
+        };
+
+
+        decks.push(
+            deck
+        );
+
+
+        saveDecks();
+
+
+        renderDecks();
+
+
+        renderPrebuiltDecks();
+
+
+        alert(
+            `${prebuilt.name} was added to your decks.`
+        );
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Prebuilt deck error:",
+            error
+        );
+
+
+        if (button) {
+
+            button.disabled =
+                false;
+
+            button.textContent =
+                "Add to My Decks";
+
+        }
+
+
+        alert(
+            "Could not load this prebuilt deck."
+        );
+
+    }
+
 }
 
 
@@ -1190,331 +1476,19 @@ function deleteDeck(deckId) {
 function escapeHTML(value) {
 
     const div =
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
 
 
-    div.textContent = value;
+    div.textContent =
+        String(value ?? "");
 
 
     return div.innerHTML;
 
 }
 
-// ======================================================
-// PREBUILT DECKS
-// ======================================================
-
-const MTG_PROXY =
-"https://mtg-scryfall-proxy.onrender.com";
-
-// ------------------------------------------------------
-// PREBUILT DECKS
-// ------------------------------------------------------
-//
-// We laden alleen metadata.
-// De daadwerkelijke kaarten worden pas geladen
-// wanneer de speler op "Add to My Decks" klikt.
-// ------------------------------------------------------
-
-const prebuiltDecks = [
-
-```
-{
-    id: "easy-starter",
-
-    name: "Easy Starter Deck",
-
-    description:
-        "Een eenvoudig deck om Magic te leren. " +
-        "Veel creatures en simpele aanvallen.",
-
-    difficulty: "Easy",
-
-    color: "White",
-
-    // Wordt gebruikt als externe deck identifier.
-    // Deze kan later vervangen worden door een
-    // specifieke MTGJSON deck.
-    mtgjsonName: "Boros Convoke",
-
-    type: "preconstructed"
-},
-
-
-{
-    id: "complex-commander",
-
-    name: "Complex Commander Deck",
-
-    description:
-        "Een veel complexer Commander deck met " +
-        "meer interactie, triggers en moeilijke keuzes.",
-
-    difficulty: "Hard",
-
-    color: "Esper",
-
-    mtgjsonName: "Endless Punishment",
-
-    type: "preconstructed"
-}
-```
-
-];
-
-// ------------------------------------------------------
-// SHOW PREBUILT DECKS
-// ------------------------------------------------------
-
-function renderPrebuiltDecks() {
-
-```
-const container =
-    document.getElementById(
-        "prebuiltDecks"
-    );
-
-
-if (!container) {
-    return;
-}
-
-
-container.innerHTML = "";
-
-
-prebuiltDecks.forEach(deck => {
-
-    const element =
-        document.createElement("div");
-
-
-    element.className = "deck";
-
-
-    const alreadyAdded =
-        decks.some(
-            existing =>
-                existing.prebuiltId === deck.id
-        );
-
-
-    element.innerHTML = `
-
-        <h3>
-            ${escapeHTML(deck.name)}
-        </h3>
-
-        <p>
-            ${escapeHTML(deck.description)}
-        </p>
-
-        <p>
-            <strong>
-                Difficulty:
-            </strong>
-
-            ${escapeHTML(deck.difficulty)}
-        </p>
-
-        <p>
-            <strong>
-                Color:
-            </strong>
-
-            ${escapeHTML(deck.color)}
-        </p>
-
-        <button
-            class="addPrebuiltButton"
-            ${alreadyAdded ? "disabled" : ""}
-        >
-
-            ${
-                alreadyAdded
-                    ? "Already Added"
-                    : "Add to My Decks"
-            }
-
-        </button>
-
-    `;
-
-
-    const button =
-        element.querySelector(
-            ".addPrebuiltButton"
-        );
-
-
-    if (!alreadyAdded) {
-
-        button.addEventListener(
-            "click",
-            () => {
-
-                addPrebuiltDeck(
-                    deck
-                );
-
-            }
-        );
-
-    }
-
-
-    container.appendChild(
-        element
-    );
-
-});
-```
-
-}
-
-// ------------------------------------------------------
-// ADD PREBUILT DECK
-// ------------------------------------------------------
-
-async function addPrebuiltDeck(
-prebuilt
-) {
-
-```
-const alreadyExists =
-    decks.some(
-        deck =>
-            deck.prebuiltId ===
-            prebuilt.id
-    );
-
-
-if (alreadyExists) {
-
-    alert(
-        "This prebuilt deck is already in your decks."
-    );
-
-    return;
-
-}
-
-
-const buttonText =
-    "Loading decklist...";
-
-
-console.log(
-    buttonText,
-    prebuilt.name
-);
-
-
-try {
-
-    /*
-     * We ask our own server for the deck.
-     *
-     * IMPORTANT:
-     * We are NOT downloading all prebuilt decks.
-     *
-     * Only this selected deck is requested.
-     */
-
-    const response =
-        await fetch(
-            `${MTG_PROXY}/api/prebuilt-decks/${encodeURIComponent(
-                prebuilt.mtgjsonName
-            )}`
-        );
-
-
-    if (!response.ok) {
-
-        throw new Error(
-            "Could not load prebuilt deck."
-        );
-
-    }
-
-
-    const data =
-        await response.json();
-
-
-    if (
-        !data.cards ||
-        !Array.isArray(data.cards)
-    ) {
-
-        throw new Error(
-            "Invalid deck data."
-        );
-
-    }
-
-
-    const deck = {
-
-        id:
-            crypto.randomUUID(),
-
-        name:
-            prebuilt.name,
-
-        prebuiltId:
-            prebuilt.id,
-
-        cards:
-            data.cards,
-
-        source:
-            "MTGJSON"
-
-    };
-
-
-    decks.push(deck);
-
-
-    saveDecks();
-
-
-    renderDecks();
-
-
-    renderPrebuiltDecks();
-
-
-    alert(
-        `${prebuilt.name} was added to your decks.`
-    );
-
-
-}
-
-catch (error) {
-
-    console.error(
-        "Prebuilt deck error:",
-        error
-    );
-
-
-    alert(
-        "Could not load this prebuilt deck."
-    );
-
-}
-```
-
-}
-
-// ======================================================
-// PREBUILT PAGE STARTUP
-// ======================================================
-
-renderPrebuiltDecks();
 
 // ======================================================
 // STARTUP
@@ -1523,3 +1497,15 @@ renderPrebuiltDecks();
 renderCollection();
 
 renderDecks();
+
+renderPrebuiltDecks();
+
+
+// ======================================================
+// DEBUG
+// ======================================================
+
+console.log(
+    "MTG app.js loaded successfully."
+);
+```
