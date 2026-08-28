@@ -1,21 +1,24 @@
 <!DOCTYPE html>
+
 <html lang="en">
 
 <head>
 
-    <meta charset="UTF-8">
+```
+<meta charset="UTF-8">
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
 
-    <title>MTG Game</title>
+<title>MTG Game</title>
 
-    <link
-        rel="stylesheet"
-        href="style.css"
-    >
+<link
+    rel="stylesheet"
+    href="style.css"
+>
+```
 
 </head>
 
@@ -23,134 +26,179 @@
 
 <header>
 
-    <h1>MTG Game</h1>
+```
+<h1>MTG Game</h1>
 
-    <nav>
+<nav>
 
-        <button onclick="showPage('searchPage')">
-            Search
-        </button>
+    <button onclick="showPage('searchPage')">
+        Search
+    </button>
 
-        <button onclick="showPage('collectionPage')">
-            Collection
-        </button>
+    <button onclick="showPage('prebuiltPage')">
+        Prebuilt Decks
+    </button>
 
-        <button onclick="showPage('decksPage')">
-            Decks
-        </button>
-        <button onclick="openPlay()">
-            Play
-        </button>
-    </nav>
+    <button onclick="showPage('collectionPage')">
+        Collection
+    </button>
+
+    <button onclick="showPage('decksPage')">
+        Decks
+    </button>
+
+    <button onclick="openPlay()">
+        Play
+    </button>
+
+</nav>
+```
 
 </header>
 
-
 <main>
 
-    <!-- ========================= -->
-    <!-- SEARCH -->
-    <!-- ========================= -->
+```
+<!-- ========================= -->
+<!-- SEARCH -->
+<!-- ========================= -->
 
-    <section id="searchPage">
+<section id="searchPage">
 
-        <h2>Search Cards</h2>
+    <h2>Search Cards</h2>
 
-        <div class="searchBox">
+    <div class="searchBox">
 
-            <input
-                id="searchInput"
-                type="text"
-                placeholder="Search cards..."
-                onkeydown="handleSearchKey(event)"
-            >
+        <input
+            id="searchInput"
+            type="text"
+            placeholder="Search cards..."
+            onkeydown="handleSearchKey(event)"
+        >
 
-            <button onclick="searchCards()">
-                Search
-            </button>
-
-        </div>
-
-        <div
-            id="searchResults"
-            class="cardGrid"
-        ></div>
-
-    </section>
-
-
-    <!-- ========================= -->
-    <!-- COLLECTION -->
-    <!-- ========================= -->
-
-    <section
-        id="collectionPage"
-        class="hidden"
-    >
-
-        <h2>My Collection</h2>
-
-        <div
-            id="collection"
-            class="cardGrid"
-        ></div>
-
-    </section>
-
-
-    <!-- ========================= -->
-    <!-- DECKS -->
-    <!-- ========================= -->
-
-    <section
-        id="decksPage"
-        class="hidden"
-    >
-
-        <div class="deckHeader">
-
-            <h2>My Decks</h2>
-
-            <button onclick="createDeck()">
-                + Create Deck
-            </button>
-
-        </div>
-
-        <div
-            id="decks"
-            class="deckGrid"
-        ></div>
-
-    </section>
-
-
-    <!-- ========================= -->
-    <!-- DECK VIEW -->
-    <!-- ========================= -->
-
-    <section
-        id="deckViewPage"
-        class="hidden"
-    >
-
-        <button onclick="showPage('decksPage')">
-            ← Back to Decks
+        <button onclick="searchCards()">
+            Search
         </button>
 
-        <h2 id="deckViewTitle"></h2>
+    </div>
 
-        <div
-            id="deckViewCards"
-            class="cardGrid"
-        ></div>
+    <div
+        id="searchResults"
+        class="cardGrid"
+    ></div>
 
-    </section>
-<section id="playPage" class="hidden">
+</section>
+
+
+
+<!-- ========================= -->
+<!-- PREBUILT DECKS -->
+<!-- ========================= -->
+
+<section
+    id="prebuiltPage"
+    class="hidden"
+>
+
+    <h2>Prebuilt Decks</h2>
+
+    <p>
+        Choose a prebuilt deck and add it to your decks.
+        The full decklist is only loaded when you add it.
+    </p>
+
+    <div
+        id="prebuiltDecks"
+        class="deckGrid"
+    ></div>
+
+</section>
+
+
+
+<!-- ========================= -->
+<!-- COLLECTION -->
+<!-- ========================= -->
+
+<section
+    id="collectionPage"
+    class="hidden"
+>
+
+    <h2>My Collection</h2>
+
+    <div
+        id="collection"
+        class="cardGrid"
+    ></div>
+
+</section>
+
+
+
+<!-- ========================= -->
+<!-- DECKS -->
+<!-- ========================= -->
+
+<section
+    id="decksPage"
+    class="hidden"
+>
+
+    <div class="deckHeader">
+
+        <h2>My Decks</h2>
+
+        <button onclick="createDeck()">
+            + Create Deck
+        </button>
+
+    </div>
+
+    <div
+        id="decks"
+        class="deckGrid"
+    ></div>
+
+</section>
+
+
+
+<!-- ========================= -->
+<!-- DECK VIEW -->
+<!-- ========================= -->
+
+<section
+    id="deckViewPage"
+    class="hidden"
+>
+
+    <button onclick="showPage('decksPage')">
+        ← Back to Decks
+    </button>
+
+    <h2 id="deckViewTitle"></h2>
+
+    <div
+        id="deckViewCards"
+        class="cardGrid"
+    ></div>
+
+</section>
+
+
+
+<!-- ========================= -->
+<!-- PLAY -->
+<!-- ========================= -->
+
+<section
+    id="playPage"
+    class="hidden"
+>
 
     <h2>Play Magic</h2>
 
-    <!-- GAME MODES -->
 
     <h3>1. Choose Game Mode</h3>
 
@@ -160,15 +208,11 @@
     ></div>
 
 
-    <!-- SELECTED MODE -->
-
     <div
         id="selectedMode"
         class="selectedMode"
     ></div>
 
-
-    <!-- DECK -->
 
     <h3>2. Choose Deck</h3>
 
@@ -176,8 +220,6 @@
         id="deckSelection"
     ></div>
 
-
-    <!-- OPPONENT -->
 
     <h3>3. Choose Opponent</h3>
 
@@ -187,21 +229,21 @@
     ></div>
 
 
-    <!-- START -->
-
     <div
         id="startGameContainer"
     ></div>
 
 </section>
+```
+
 </main>
-
-
 
 <script src="app.js"></script>
 
 <script src="game/gameModes.js"></script>
+
 <script src="game/gameValidator.js"></script>
+
 <script src="game/play.js"></script>
 
 </body>
