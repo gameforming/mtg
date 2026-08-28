@@ -14,11 +14,41 @@
 //     gameUI.js
 // ======================================================
 
-
+const SCRYFALL_PROXY =
+    "https://mtg-scryfall-proxy.onrender.com";
 // ======================================================
 // OPEN GAME PAGE
 // ======================================================
+function getCardImage(card) {
 
+    if (!card || !card.image) {
+        return "";
+    }
+
+
+    // Als de afbeelding al via onze proxy gaat,
+    // gebruiken we hem direct.
+    if (
+        card.image.startsWith(
+            SCRYFALL_PROXY
+        )
+    ) {
+
+        return card.image;
+
+    }
+
+
+    // Als het een Scryfall afbeelding is,
+    // sturen we hem via Render.
+    return (
+        `${SCRYFALL_PROXY}/api/cards/image?url=` +
+        encodeURIComponent(
+            card.image
+        )
+    );
+
+}
 function openGamePage() {
 
     window.location.href =
@@ -357,26 +387,46 @@ function createCardElement(
     // CARD IMAGE
     // ==============================================
 
-    if (card.image) {
+if (card.image) {
 
-        const image =
-            document.createElement(
-                "img"
-            );
-
-
-        image.src =
-            card.image;
-
-
-        image.alt =
-            card.name;
-
-
-        element.appendChild(
-            image
+    const image =
+        document.createElement(
+            "img"
         );
 
+
+    // Gebruik Render proxy zodat
+    // de browser Scryfall niet direct
+    // hoeft te bereiken.
+    image.src =
+        getCardImage(card);
+
+
+    image.alt =
+        card.name;
+
+
+    image.loading =
+        "lazy";
+
+
+    image.onerror =
+        () => {
+
+            console.error(
+                "Card image failed:",
+                card.name,
+                image.src
+            );
+
+        };
+
+
+    element.appendChild(
+        image
+    );
+
+}
     } else {
 
         element.textContent =
