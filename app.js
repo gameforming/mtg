@@ -12,7 +12,187 @@ let collection =
 
 let decks =
     JSON.parse(localStorage.getItem("mtgDecks")) || [];
+// ======================================================
+// DEFAULT PRECON DECKS
+// ======================================================
 
+function createDefaultPrecons() {
+
+    // Alleen aanmaken als de gebruiker nog geen decks heeft.
+    if (decks.length > 0) {
+        return;
+    }
+
+
+    // ==================================================
+    // EASY PRECON
+    // ==================================================
+
+    const easyPrecon = {
+
+        id: crypto.randomUUID(),
+
+        name: "Easy - White Creatures",
+
+        difficulty: "Easy",
+
+        cards: [
+
+            {
+                id: "5f2a5a91-3f9d-4c2e-bc3d-7f8f6c6b8c8a",
+                name: "Plains",
+                image: "",
+                amount: 20
+            },
+
+            {
+                id: "00000000-0000-0000-0000-000000000001",
+                name: "Elite Vanguard",
+                image: "",
+                amount: 4
+            },
+
+            {
+                id: "00000000-0000-0000-0000-000000000002",
+                name: "Savannah Lions",
+                image: "",
+                amount: 4
+            },
+
+            {
+                id: "00000000-0000-0000-0000-000000000003",
+                name: "Serra Angel",
+                image: "",
+                amount: 4
+            },
+
+            {
+                id: "00000000-0000-0000-0000-000000000004",
+                name: "Pacifism",
+                image: "",
+                amount: 4
+            },
+
+            {
+                id: "00000000-0000-0000-0000-000000000005",
+                name: "Raise the Alarm",
+                image: "",
+                amount: 4
+            },
+
+            {
+                id: "00000000-0000-0000-0000-000000000006",
+                name: "Giant Growth",
+                image: "",
+                amount: 4
+            }
+
+        ]
+
+    };
+
+
+    // ==================================================
+    // DIFFICULT PRECON
+    // ==================================================
+
+    const difficultPrecon = {
+
+        id: crypto.randomUUID(),
+
+        name: "Difficult - Graveyard Commander",
+
+        difficulty: "Difficult",
+
+        cards: [
+
+            {
+                id: "5f2a5a91-3f9d-4c2e-bc3d-7f8f6c6b8c8a",
+                name: "Swamp",
+                image: "",
+                amount: 18
+            },
+
+            {
+                id: "00000000-0000-0000-0000-000000000010",
+                name: "Command Tower",
+                image: "",
+                amount: 1
+            },
+
+            {
+                id: "00000000-0000-0000-0000-000000000011",
+                name: "Midnight Reaper",
+                image: "",
+                amount: 3
+            },
+
+            {
+                id: "00000000-0000-0000-0000-000000000012",
+                name: "Cemetery Reaper",
+                image: "",
+                amount: 3
+            },
+
+            {
+                id: "00000000-0000-0000-0000-000000000013",
+                name: "God-Eternal Oketra",
+                image: "",
+                amount: 2
+            },
+
+            {
+                id: "00000000-0000-0000-0000-000000000014",
+                name: "Liliana, Death's Majesty",
+                image: "",
+                amount: 2
+            },
+
+            {
+                id: "00000000-0000-0000-0000-000000000015",
+                name: "Prophet of the Scarab",
+                image: "",
+                amount: 3
+            },
+
+            {
+                id: "00000000-0000-0000-0000-000000000016",
+                name: "Cursecloth Wrappings",
+                image: "",
+                amount: 3
+            },
+
+            {
+                id: "00000000-0000-0000-0000-000000000017",
+                name: "Accursed Duneyard",
+                image: "",
+                amount: 4
+            }
+
+        ]
+
+    };
+
+
+    decks.push(
+        easyPrecon
+    );
+
+    decks.push(
+        difficultPrecon
+    );
+
+
+    saveDecks();
+
+}
+
+
+// ======================================================
+// CREATE DEFAULT PRECONS
+// ======================================================
+
+createDefaultPrecons();
 
 // ======================================================
 // STORAGE
