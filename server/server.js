@@ -7,6 +7,7 @@ const PORT = process.env.PORT || 10000;
 
 const SCRYFALL_API = "https://api.scryfall.com";
 const MTGJSON_API = "https://mtgjson.com/api/v5";
+const SCRYFALL_BATCH_SIZE = 75;
 
 
 // ======================================================
@@ -573,12 +574,22 @@ function convertCard(card) {
     return {
 
         id:
-            card.uuid ||
             card.scryfallId ||
+            card.uuid ||
             card.name,
 
         name:
             card.name,
+
+        setCode:
+            card.setCode ||
+            card.set_code ||
+            null,
+
+        collectorNumber:
+            card.number ||
+            card.collectorNumber ||
+            null,
 
         amount:
             Number(
@@ -588,18 +599,258 @@ function convertCard(card) {
             ),
 
         image:
+            null,
+
+        scryfallId:
+            card.scryfallId ||
             null
 
     };
 
 }
 
+// ======================================================
+// SCRYFALL BATCH LOOKUP
+// ======================================================
 
+async function enrichCardsWithScryfall(
+    cards
+) {
+
+    const result = [];
+
+    for (
+        let i = 0;
+        i < cards.length;
+        i += SCRYFALL_BATCH_SIZE
+    ) {
+
+        const batch =
+            cards.slice(
+                i,
+                i + SCRYFALL_BATCH_SIZE
+            );
+
+
+        const identifiers =
+            batch.map(
+                card => {
+
+                    // Best:
+                    // specifieke Scryfall ID
+                    if (
+                        card.scryfallId
+                    ) {
+
+                        return {
+                            id:
+                                card.scryfallId
+                        };
+
+                    }
+
+
+                    // Tweede keuze:
+                    // set + collector number
+                    if (
+                        card.setCode &&
+                        card.collectorNumber
+                    ) {
+
+                        return {
+
+                            set:
+                                String(
+                                    card.setCode
+                                ).toLowerCase(),
+
+                            collector_number:
+                                String(
+                                    card.collectorNumber
+                                )
+
+                        };
+
+                    }
+
+
+                    // Fallback:
+                    // naam
+                    return {
+
+                        name:
+                            card.name
+
+                    };
+
+                }
+            );
+
+
+        const response =
+            await fetch(
+                `${SCRYFALL_API}/cards/collection`,
+                {
+
+                    method:
+                        "POST",
+
+                    headers: {
+
+                        "Content-Type":
+                            "application/json",
+
+                        "Accept":
+                            "application/json",
+
+                        "User-Agent":
+                            "MTG-Game/1.0"
+
+                    },
+
+                    body:
+                        JSON.stringify({
+
+                            identifiers
+
+                        })
+
+                }
+            );
+
+
+        if (!response.ok) {
+
+            console.error(
+                "Scryfall batch lookup failed:",
+                response.status
+            );
+
+
+            result.push(
+                ...batch
+            );
+
+            continue;
+
+        }
+
+
+        const data =
+            await response.json();
+
+
+        const scryfallCards =
+            data.data || [];
+
+
+        // Match Scryfall data terug aan onze kaarten
+        for (
+            let index = 0;
+            index < batch.length;
+            index++
+        ) {
+
+            const original =
+                batch[index];
+
+
+            const scryfallCard =
+                scryfallCards.find(
+                    card =>
+                        card.id ===
+                        original.scryfallId
+                ) ||
+
+                scryfallCards.find(
+                    card =>
+                        card.name ===
+                        original.name
+                );
+
+
+            if (!scryfallCard) {
+
+                result.push(
+                    original
+                );
+
+                continue;
+
+            }
+
+
+            const image =
+                scryfallCard
+                    .image_uris
+                    ?.normal ||
+
+                scryfallCard
+                    .card_faces
+                    ?.[0]
+                    ?.image_uris
+                    ?.normal ||
+
+                null;
+
+
+            result.push({
+
+                ...original,
+
+                id:
+                    scryfallCard.id,
+
+                scryfallId:
+                    scryfallCard.id,
+
+                name:
+                    scryfallCard.name,
+
+                image,
+
+                manaCost:
+                    scryfallCard.mana_cost,
+
+                cmc:
+                    scryfallCard.cmc,
+
+                typeLine:
+                    scryfallCard.type_line,
+
+                oracleText:
+                    scryfallCard.oracle_text,
+
+                power:
+                    scryfallCard.power,
+
+                toughness:
+                    scryfallCard.toughness,
+
+                colors:
+                    scryfallCard.colors,
+
+                colorIdentity:
+                    scryfallCard.color_identity,
+
+                rarity:
+                    scryfallCard.rarity
+
+            });
+
+        }
+
+    }
+
+
+    return result;
+
+}
 // ======================================================
 // CONVERT MTGJSON DECK
 // ======================================================
 
-function convertDeck(
+async function convertDeck(
     sourceDeck,
     deckInfo
 ) {
@@ -684,34 +935,40 @@ function convertDeck(
     }
 
 
-    return {
-
-        source: "MTGJSON",
-
-        name:
-            sourceDeck.name ||
-            deckInfo.name,
-
-        code:
-            sourceDeck.code ||
-            deckInfo.code,
-
-        fileName:
-            deckInfo.fileName,
-
-        type:
-            sourceDeck.type ||
-            deckInfo.type,
-
-        releaseDate:
-            sourceDeck.releaseDate ||
-            deckInfo.releaseDate,
-
+    const enrichedCards =
+    await enrichCardsWithScryfall(
         cards
+    );
 
-    };
 
-}
+return {
+
+    source:
+        "MTGJSON + Scryfall",
+
+    name:
+        sourceDeck.name ||
+        deckInfo.name,
+
+    code:
+        sourceDeck.code ||
+        deckInfo.code,
+
+    fileName:
+        deckInfo.fileName,
+
+    type:
+        sourceDeck.type ||
+        deckInfo.type,
+
+    releaseDate:
+        sourceDeck.releaseDate ||
+        deckInfo.releaseDate,
+
+    cards:
+        enrichedCards
+
+};
 
 
 // ======================================================
@@ -880,7 +1137,7 @@ app.get(
             // --------------------------------------------------
 
             const result =
-                convertDeck(
+                await convertDeck(
                     sourceDeck,
                     deckInfo
                 );
