@@ -5,6 +5,11 @@ const app = express();
 const PORT =
     process.env.PORT || 10000;
 
+
+// ======================================================
+// EXTERNAL APIS
+// ======================================================
+
 const SCRYFALL_API =
     "https://api.scryfall.com";
 
@@ -16,8 +21,7 @@ const MTGJSON_API =
 // SETTINGS
 // ======================================================
 
-// Scryfall collection endpoint ondersteunt batches.
-// We houden dit bewust onder een veilige grootte.
+// Scryfall collection requests in batches.
 const SCRYFALL_BATCH_SIZE = 75;
 
 
@@ -75,22 +79,34 @@ app.use(
 function sleep(ms) {
 
     return new Promise(
-        resolve => {
-
+        resolve =>
             setTimeout(
                 resolve,
                 ms
-            );
-
-        }
+            )
     );
 
 }
 
 
-function getCardImage(
-    card
-) {
+function getScryfallHeaders() {
+
+    return {
+
+        "Accept":
+            "application/json",
+
+        "User-Agent":
+            "MTG-Game/1.0"
+
+    };
+
+}
+
+
+function getCardImage(card) {
+
+    // Normal card
 
     if (
         card.image_uris?.normal
@@ -103,8 +119,12 @@ function getCardImage(
     }
 
 
+    // Double faced card
+
     if (
-        card.card_faces
+        Array.isArray(
+            card.card_faces
+        )
     ) {
 
         for (
@@ -142,11 +162,22 @@ app.get(
 
         res.json({
 
-            online:
-                true,
+            online: true,
 
             service:
-                "MTG Scryfall + MTGJSON Proxy"
+                "MTG Render Proxy",
+
+            routes: [
+
+                "/api/cards/search?q=dragon",
+
+                "/api/cards/:id",
+
+                "/api/cards/image?url=...",
+
+                "/api/prebuilt-decks/:deckName"
+
+            ]
 
         });
 
@@ -155,15 +186,12 @@ app.get(
 
 
 // ======================================================
-// SCRYFALL SEARCH
+// SCRYFALL CARD SEARCH
 // ======================================================
 
 app.get(
     "/api/cards/search",
-    async (
-        req,
-        res
-    ) => {
+    async (req, res) => {
 
         try {
 
@@ -173,9 +201,7 @@ app.get(
                 ).trim();
 
 
-            if (
-                !query
-            ) {
+            if (!query) {
 
                 return res
                     .status(400)
@@ -206,15 +232,8 @@ app.get(
                     url,
                     {
 
-                        headers: {
-
-                            "Accept":
-                                "application/json",
-
-                            "User-Agent":
-                                "MTG-Game/1.0"
-
-                        }
+                        headers:
+                            getScryfallHeaders()
 
                     }
                 );
@@ -224,30 +243,17 @@ app.get(
                 await response.json();
 
 
-            if (
-                !response.ok
-            ) {
-
-                return res
-                    .status(
-                        response.status
-                    )
-                    .json(
-                        data
-                    );
-
-            }
-
-
-            res.json(
-                data
-            );
+            return res
+                .status(
+                    response.status
+                )
+                .json(
+                    data
+                );
 
         }
 
-        catch (
-            error
-        ) {
+        catch (error) {
 
             console.error(
                 "Scryfall search error:",
@@ -255,7 +261,7 @@ app.get(
             );
 
 
-            res
+            return res
                 .status(500)
                 .json({
 
@@ -276,10 +282,7 @@ app.get(
 
 app.get(
     "/api/cards/:id",
-    async (
-        req,
-        res
-    ) => {
+    async (req, res) => {
 
         try {
 
@@ -294,15 +297,8 @@ app.get(
                     `${SCRYFALL_API}/cards/${id}`,
                     {
 
-                        headers: {
-
-                            "Accept":
-                                "application/json",
-
-                            "User-Agent":
-                                "MTG-Game/1.0"
-
-                        }
+                        headers:
+                            getScryfallHeaders()
 
                     }
                 );
@@ -312,43 +308,30 @@ app.get(
                 await response.json();
 
 
-            if (
-                !response.ok
-            ) {
-
-                return res
-                    .status(
-                        response.status
-                    )
-                    .json(
-                        data
-                    );
-
-            }
-
-
-            res.json(
-                data
-            );
+            return res
+                .status(
+                    response.status
+                )
+                .json(
+                    data
+                );
 
         }
 
-        catch (
-            error
-        ) {
+        catch (error) {
 
             console.error(
-                "Single card error:",
+                "Card error:",
                 error
             );
 
 
-            res
+            return res
                 .status(500)
                 .json({
 
                     error:
-                        "Could not get card."
+                        "Could not load card."
 
                 });
 
@@ -359,15 +342,12 @@ app.get(
 
 
 // ======================================================
-// CARD IMAGE PROXY
+// IMAGE PROXY
 // ======================================================
 
 app.get(
     "/api/cards/image",
-    async (
-        req,
-        res
-    ) => {
+    async (req, res) => {
 
         try {
 
@@ -377,9 +357,7 @@ app.get(
                 ).trim();
 
 
-            if (
-                !imageUrl
-            ) {
+            if (!imageUrl) {
 
                 return res
                     .status(400)
@@ -399,17 +377,18 @@ app.get(
                 );
 
 
-            // Alleen Scryfall images toestaan.
-            // Dit voorkomt dat jouw proxy gebruikt
-            // wordt om willekeurige websites op te halen.
+            // Only allow Scryfall image URLs
 
-            if (
-                !parsed.hostname.endsWith(
+            const allowed =
+                parsed.hostname ===
+                    "cards.scryfall.io" ||
+
+                parsed.hostname.endsWith(
                     ".scryfall.io"
-                ) &&
-                parsed.hostname !==
-                "cards.scryfall.io"
-            ) {
+                );
+
+
+            if (!allowed) {
 
                 return res
                     .status(403)
@@ -439,9 +418,7 @@ app.get(
                 );
 
 
-            if (
-                !response.ok
-            ) {
+            if (!response.ok) {
 
                 return res
                     .status(
@@ -460,9 +437,7 @@ app.get(
                 );
 
 
-            if (
-                contentType
-            ) {
+            if (contentType) {
 
                 res.setHeader(
                     "Content-Type",
@@ -472,28 +447,25 @@ app.get(
             }
 
 
-            // Browser mag afbeelding cachen.
             res.setHeader(
                 "Cache-Control",
                 "public, max-age=86400"
             );
 
 
-            const imageBuffer =
+            const buffer =
                 Buffer.from(
                     await response.arrayBuffer()
                 );
 
 
-            res.send(
-                imageBuffer
+            return res.send(
+                buffer
             );
 
         }
 
-        catch (
-            error
-        ) {
+        catch (error) {
 
             console.error(
                 "Image proxy error:",
@@ -501,7 +473,7 @@ app.get(
             );
 
 
-            res
+            return res
                 .status(500)
                 .send(
                     "Could not load image."
@@ -514,91 +486,12 @@ app.get(
 
 
 // ======================================================
-// MTGJSON DECK LIST
+// NORMALIZE MTGJSON CARD
 // ======================================================
 
-app.get(
-    "/api/decks",
-    async (
-        req,
-        res
-    ) => {
-
-        try {
-
-            const response =
-                await fetch(
-                    `${MTGJSON_API}/SetList.json`
-                );
-
-
-            if (
-                !response.ok
-            ) {
-
-                throw new Error(
-                    "Could not load MTGJSON set list."
-                );
-
-            }
-
-
-            const data =
-                await response.json();
-
-
-            res.json(
-                data
-            );
-
-        }
-
-        catch (
-            error
-        ) {
-
-            console.error(
-                "MTGJSON error:",
-                error
-            );
-
-
-            res
-                .status(500)
-                .json({
-
-                    error:
-                        "Could not load decks."
-
-                });
-
-        }
-
-    }
-);
-
-
-// ======================================================
-// CONVERT MTGJSON CARD
-// ======================================================
-
-function convertCard(
-    card
-) {
+function normalizeDeckCard(card) {
 
     return {
-
-        // Gebruik Scryfall ID als die bestaat.
-        // Anders gebruiken we tijdelijk UUID/naam.
-
-        id:
-            card.scryfallId ||
-            card.uuid ||
-            card.name,
-
-        scryfallId:
-            card.scryfallId ||
-            null,
 
         name:
             card.name ||
@@ -612,6 +505,15 @@ function convertCard(
         collectorNumber:
             card.number ||
             card.collectorNumber ||
+            null,
+
+        scryfallId:
+            card.scryfallId ||
+            null,
+
+        mtgjsonId:
+            card.uuid ||
+            card.mtgjson_uuid ||
             null,
 
         amount:
@@ -630,15 +532,14 @@ function convertCard(
 
 
 // ======================================================
-// BUILD SCRYFALL IDENTIFIER
+// SCRYFALL IDENTIFIER
 // ======================================================
 
-function buildIdentifier(
+function createScryfallIdentifier(
     card
 ) {
 
-    // Beste methode:
-    // exacte Scryfall UUID.
+    // Best option
 
     if (
         card.scryfallId
@@ -654,8 +555,7 @@ function buildIdentifier(
     }
 
 
-    // Tweede keuze:
-    // exacte set + collector number.
+    // Exact printing
 
     if (
         card.setCode &&
@@ -679,8 +579,7 @@ function buildIdentifier(
     }
 
 
-    // Laatste fallback:
-    // kaartnaam.
+    // Fallback
 
     return {
 
@@ -700,31 +599,38 @@ async function enrichCardsWithScryfall(
     cards
 ) {
 
-    const finalCards =
-        [];
+    const finalCards = [];
 
 
     for (
-        let start = 0;
-        start < cards.length;
-        start += SCRYFALL_BATCH_SIZE
+        let index = 0;
+        index < cards.length;
+        index += SCRYFALL_BATCH_SIZE
     ) {
 
         const batch =
             cards.slice(
-                start,
-                start +
+                index,
+                index +
                 SCRYFALL_BATCH_SIZE
             );
 
 
         const identifiers =
             batch.map(
-                buildIdentifier
+                createScryfallIdentifier
             );
 
 
         try {
+
+            console.log(
+                "Scryfall batch:",
+                index,
+                "-",
+                index + batch.length
+            );
+
 
             const response =
                 await fetch(
@@ -736,14 +642,10 @@ async function enrichCardsWithScryfall(
 
                         headers: {
 
+                            ...getScryfallHeaders(),
+
                             "Content-Type":
-                                "application/json",
-
-                            "Accept":
-                                "application/json",
-
-                            "User-Agent":
-                                "MTG-Game/1.0"
+                                "application/json"
 
                         },
 
@@ -758,9 +660,7 @@ async function enrichCardsWithScryfall(
                 );
 
 
-            if (
-                !response.ok
-            ) {
+            if (!response.ok) {
 
                 console.error(
                     "Scryfall collection failed:",
@@ -781,49 +681,61 @@ async function enrichCardsWithScryfall(
                 await response.json();
 
 
-            const returnedCards =
+            const returned =
                 data.data || [];
 
 
-            const notFound =
-                data.not_found || [];
+            // Create maps
 
-
-            // Maak een map voor snelle matching.
-
-            const byId =
+            const cardsById =
                 new Map();
 
 
-            const byName =
+            const cardsByName =
                 new Map();
 
 
             for (
-                const scryfallCard
-                of returnedCards
+                const card
+                of returned
             ) {
 
-                byId.set(
-                    scryfallCard.id,
-                    scryfallCard
-                );
+                if (card.id) {
 
-
-                if (
-                    scryfallCard.name
-                ) {
-
-                    byName.set(
-                        scryfallCard.name
-                            .toLowerCase(),
-                        scryfallCard
+                    cardsById.set(
+                        card.id,
+                        card
                     );
+
+                }
+
+
+                if (card.name) {
+
+                    const key =
+                        card.name
+                            .toLowerCase();
+
+
+                    if (
+                        !cardsByName.has(
+                            key
+                        )
+                    ) {
+
+                        cardsByName.set(
+                            key,
+                            card
+                        );
+
+                    }
 
                 }
 
             }
 
+
+            // Enrich every original card
 
             for (
                 const original
@@ -839,7 +751,7 @@ async function enrichCardsWithScryfall(
                 ) {
 
                     scryfallCard =
-                        byId.get(
+                        cardsById.get(
                             original.scryfallId
                         );
 
@@ -852,7 +764,7 @@ async function enrichCardsWithScryfall(
                 ) {
 
                     scryfallCard =
-                        byName.get(
+                        cardsByName.get(
                             original.name
                                 .toLowerCase()
                         );
@@ -860,13 +772,20 @@ async function enrichCardsWithScryfall(
                 }
 
 
-                if (
-                    !scryfallCard
-                ) {
+                // Card not found
 
-                    finalCards.push(
-                        original
-                    );
+                if (!scryfallCard) {
+
+                    finalCards.push({
+
+                        ...original,
+
+                        id:
+                            original.scryfallId ||
+                            original.mtgjsonId ||
+                            original.name
+
+                    });
 
                     continue;
 
@@ -896,8 +815,7 @@ async function enrichCardsWithScryfall(
                         "",
 
                     cmc:
-                        scryfallCard.cmc ??
-                        0,
+                        scryfallCard.cmc ?? 0,
 
                     typeLine:
                         scryfallCard.type_line ||
@@ -935,37 +853,35 @@ async function enrichCardsWithScryfall(
 
             }
 
-
-            // Kleine pauze tussen batches.
-            if (
-                start +
-                SCRYFALL_BATCH_SIZE <
-                cards.length
-            ) {
-
-                await sleep(
-                    150
-                );
-
-            }
-
         }
 
-        catch (
-            error
-        ) {
+        catch (error) {
 
             console.error(
-                "Card enrichment error:",
+                "Scryfall enrichment error:",
                 error
             );
 
 
-            // De deck blijft bruikbaar,
-            // ook als Scryfall tijdelijk faalt.
+            // Don't destroy the whole deck
 
             finalCards.push(
                 ...batch
+            );
+
+        }
+
+
+        // Avoid hammering API
+
+        if (
+            index +
+            SCRYFALL_BATCH_SIZE <
+            cards.length
+        ) {
+
+            await sleep(
+                150
             );
 
         }
@@ -979,166 +895,205 @@ async function enrichCardsWithScryfall(
 
 
 // ======================================================
-// CONVERT MTGJSON DECK
+// LOAD MTGJSON DECK LIST
 // ======================================================
 
-async function convertDeck(
-    sourceDeck,
-    deckInfo = {}
-) {
+async function loadDeckList() {
 
-    const sourceCards =
-        sourceDeck.cards ||
-        sourceDeck.mainBoard ||
-        sourceDeck.mainboard ||
-        [];
-
-
-    const cards =
-        sourceCards.map(
-            convertCard
+    const response =
+        await fetch(
+            `${MTGJSON_API}/DeckList.json`
         );
 
 
-    const enrichedCards =
-        await enrichCardsWithScryfall(
-            cards
+    if (!response.ok) {
+
+        throw new Error(
+            `MTGJSON DeckList failed: ${response.status}`
         );
 
+    }
 
-    return {
 
-        source:
-            "MTGJSON + Scryfall",
+    const json =
+        await response.json();
 
-        name:
-            sourceDeck.name ||
-            deckInfo.name ||
-            "Unknown Deck",
 
-        code:
-            sourceDeck.code ||
-            deckInfo.code ||
-            null,
-
-        fileName:
-            deckInfo.fileName ||
-            null,
-
-        type:
-            sourceDeck.type ||
-            deckInfo.type ||
-            null,
-
-        releaseDate:
-            sourceDeck.releaseDate ||
-            deckInfo.releaseDate ||
-            null,
-
-        cards:
-            enrichedCards
-
-    };
+    return json.data || [];
 
 }
 
 
 // ======================================================
-// LOAD SPECIFIC PREBUILT DECK
+// FIND PREBUILT DECK
 // ======================================================
-//
-// Dit endpoint verwacht bijvoorbeeld:
-//
-// /api/decks/abc.json
-//
-// Of jouw frontend kan hier de bestaande
-// deck endpoint-naam voor gebruiken.
+
+function findDeck(
+    deckList,
+    requestedName
+) {
+
+    const normalized =
+        requestedName
+            .trim()
+            .toLowerCase();
+
+
+    return deckList.find(
+        deck => {
+
+            const name =
+                String(
+                    deck.name || ""
+                )
+                    .trim()
+                    .toLowerCase();
+
+
+            return (
+                name === normalized
+            );
+
+        }
+    );
+
+}
+
+
+// ======================================================
+// LOAD PREBUILT DECK
 // ======================================================
 
 app.get(
-    "/api/deck/:fileName",
-    async (
-        req,
-        res
-    ) => {
+    "/api/prebuilt-decks/:deckName",
+    async (req, res) => {
 
         try {
 
-            const fileName =
-                encodeURIComponent(
-                    req.params.fileName
+            const requestedName =
+                decodeURIComponent(
+                    req.params.deckName
                 );
 
 
-            const url =
-                `${MTGJSON_API}/DeckList.json`;
+            console.log(
+                "Requested prebuilt deck:",
+                requestedName
+            );
 
 
-            const response =
-                await fetch(
-                    url
-                );
-
-
-            if (
-                !response.ok
-            ) {
-
-                throw new Error(
-                    "Could not load MTGJSON DeckList."
-                );
-
-            }
-
+            // ==================================================
+            // 1. Load deck list from MTGJSON
+            // ==================================================
 
             const deckList =
-                await response.json();
+                await loadDeckList();
 
 
-            const list =
-                deckList.data ||
-                [];
+            console.log(
+                "MTGJSON decks:",
+                deckList.length
+            );
 
+
+            // ==================================================
+            // 2. Find requested deck
+            // ==================================================
 
             const deckInfo =
-                list.find(
-                    deck =>
-
-                        deck.fileName ===
-                        req.params.fileName ||
-
-                        deck.code ===
-                        req.params.fileName ||
-
-                        deck.name ===
-                        req.params.fileName
+                findDeck(
+                    deckList,
+                    requestedName
                 );
 
 
-            if (
-                !deckInfo
-            ) {
+            if (!deckInfo) {
+
+                console.log(
+                    "Deck not found:",
+                    requestedName
+                );
+
 
                 return res
                     .status(404)
                     .json({
 
                         error:
-                            "Deck not found."
+                            "Deck not found",
+
+                        requested:
+                            requestedName
 
                     });
 
             }
 
 
-            const actualFile =
-                deckInfo.fileName ||
-                fileName;
+            console.log(
+                "Found deck:",
+                deckInfo.name
+            );
 
+
+            // ==================================================
+            // 3. Determine file URL
+            // ==================================================
+
+            let deckFile =
+                deckInfo.fileName ||
+                deckInfo.filename ||
+                deckInfo.code;
+
+
+            if (!deckFile) {
+
+                return res
+                    .status(500)
+                    .json({
+
+                        error:
+                            "Deck has no MTGJSON file reference.",
+
+                        deck:
+                            deckInfo
+
+                    });
+
+            }
+
+
+            // MTGJSON filenames normally need .json
+
+            if (
+                !deckFile.endsWith(
+                    ".json"
+                )
+            ) {
+
+                deckFile +=
+                    ".json";
+
+            }
+
+
+            const deckUrl =
+                `${MTGJSON_API}/${deckFile}`;
+
+
+            console.log(
+                "Loading deck file:",
+                deckUrl
+            );
+
+
+            // ==================================================
+            // 4. Download deck
+            // ==================================================
 
             const deckResponse =
                 await fetch(
-                    `${MTGJSON_API}/${actualFile}`
+                    deckUrl
                 );
 
 
@@ -1146,51 +1101,138 @@ app.get(
                 !deckResponse.ok
             ) {
 
-                throw new Error(
-                    "Could not load deck file."
-                );
+                return res
+                    .status(
+                        deckResponse.status
+                    )
+                    .json({
+
+                        error:
+                            "Could not download MTGJSON deck.",
+
+                        url:
+                            deckUrl
+
+                    });
 
             }
 
 
-            const deckData =
+            const deckJson =
                 await deckResponse.json();
 
 
             const sourceDeck =
-                deckData.data ||
-                deckData;
+                deckJson.data ||
+                deckJson;
 
 
-            const result =
-                await convertDeck(
-                    sourceDeck,
-                    deckInfo
+            // ==================================================
+            // 5. Get cards
+            // ==================================================
+
+            const sourceCards =
+                sourceDeck.cards ||
+                sourceDeck.mainBoard ||
+                sourceDeck.mainboard ||
+                [];
+
+
+            const cards =
+                sourceCards.map(
+                    normalizeDeckCard
                 );
 
 
-            res.json(
-                result
+            if (
+                cards.length === 0
+            ) {
+
+                console.log(
+                    "Deck contained no cards."
+                );
+
+
+                return res
+                    .status(500)
+                    .json({
+
+                        error:
+                            "Deck contains no cards."
+
+                    });
+
+            }
+
+
+            console.log(
+                "Deck cards:",
+                cards.length
             );
+
+
+            // ==================================================
+            // 6. Enrich through Scryfall
+            // ==================================================
+
+            const enrichedCards =
+                await enrichCardsWithScryfall(
+                    cards
+                );
+
+
+            // ==================================================
+            // 7. Send deck to frontend
+            // ==================================================
+
+            return res.json({
+
+                source:
+                    "MTGJSON + Scryfall",
+
+                id:
+                    deckInfo.code ||
+                    deckInfo.fileName ||
+                    deckInfo.name,
+
+                name:
+                    sourceDeck.name ||
+                    deckInfo.name,
+
+                type:
+                    sourceDeck.type ||
+                    deckInfo.type ||
+                    null,
+
+                releaseDate:
+                    sourceDeck.releaseDate ||
+                    deckInfo.releaseDate ||
+                    null,
+
+                cards:
+                    enrichedCards
+
+            });
 
         }
 
-        catch (
-            error
-        ) {
+        catch (error) {
 
             console.error(
-                "Deck loading error:",
+                "Prebuilt deck error:",
                 error
             );
 
 
-            res
+            return res
                 .status(500)
                 .json({
 
                     error:
-                        "Could not load prebuilt deck."
+                        "Could not load prebuilt deck.",
+
+                    message:
+                        error.message
 
                 });
 
@@ -1201,21 +1243,21 @@ app.get(
 
 
 // ======================================================
-// 404
+// 404 HANDLER
 // ======================================================
 
 app.use(
-    (
-        req,
-        res
-    ) => {
+    (req, res) => {
 
         res
             .status(404)
             .json({
 
                 error:
-                    "API route not found."
+                    "API route not found.",
+
+                path:
+                    req.path
 
             });
 
