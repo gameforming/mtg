@@ -28,7 +28,8 @@ const SCRYFALL_BATCH_SIZE = 75;
 // ======================================================
 // CORS
 // ======================================================
-
+const PUBLIC_SERVER_URL =
+    process.env.PUBLIC_SERVER_URL || "https://mtg-scryfall-proxy.onrender.com";
 app.use(
     (req, res, next) => {
 
@@ -71,7 +72,78 @@ app.use(
     })
 );
 
+function proxyScryfallCard(card) {
 
+    if (!card) {
+        return card;
+    }
+
+    const result = {
+        ...card
+    };
+
+    if (card.image_uris) {
+
+        result.image_uris = {
+            ...card.image_uris
+        };
+
+        for (const key of Object.keys(result.image_uris)) {
+
+            if (result.image_uris[key]) {
+
+                result.image_uris[key] =
+                    createImageProxyUrl(
+                        result.image_uris[key]
+                    );
+
+            }
+
+        }
+
+    }
+
+    if (Array.isArray(card.card_faces)) {
+
+        result.card_faces =
+            card.card_faces.map(face => {
+
+                const newFace = {
+                    ...face
+                };
+
+                if (face.image_uris) {
+
+                    newFace.image_uris = {
+                        ...face.image_uris
+                    };
+
+                    for (
+                        const key of
+                        Object.keys(newFace.image_uris)
+                    ) {
+
+                        if (newFace.image_uris[key]) {
+
+                            newFace.image_uris[key] =
+                                createImageProxyUrl(
+                                    newFace.image_uris[key]
+                                );
+
+                        }
+
+                    }
+
+                }
+
+                return newFace;
+
+            });
+
+    }
+
+    return result;
+}
 // ======================================================
 // HELPERS
 // ======================================================
@@ -106,51 +178,35 @@ function getScryfallHeaders() {
 
 function getCardImage(card) {
 
+    let imageUrl = null;
+
     // Normal card
-
-    if (
-        card.image_uris?.normal
-    ) {
-
-        return card
-            .image_uris
-            .normal;
-
+    if (card.image_uris?.normal) {
+        imageUrl = card.image_uris.normal;
     }
 
-
     // Double faced card
+    if (!imageUrl && Array.isArray(card.card_faces)) {
 
-    if (
-        Array.isArray(
-            card.card_faces
-        )
-    ) {
+        for (const face of card.card_faces) {
 
-        for (
-            const face
-            of card.card_faces
-        ) {
-
-            if (
-                face.image_uris?.normal
-            ) {
-
-                return face
-                    .image_uris
-                    .normal;
-
+            if (face.image_uris?.normal) {
+                imageUrl = face.image_uris.normal;
+                break;
             }
 
         }
 
     }
 
+    if (!imageUrl) {
+        return null;
+    }
 
-    return null;
-
+    // IMPORTANT:
+    // Never send the Scryfall image URL directly to the browser.
+    return createImageProxyUrl(imageUrl);
 }
-
 
 // ======================================================
 // HEALTH CHECK
@@ -183,7 +239,14 @@ app.get(
 
     }
 );
+function createImageProxyUrl(imageUrl) {
 
+    if (!imageUrl) {
+        return null;
+    }
+
+    return `/api/cards/image?url=${encodeURIComponent(imageUrl)}`;
+}
 
 // ======================================================
 // SCRYFALL CARD SEARCH
@@ -203,10 +266,16 @@ app.get(
 
             if (!query) {
 
-                return res
-                    .status(400)
-                    .json({
+                if (data?.data && Array.isArray(data.data)) {
 
+                    data.data =
+                    data.data.map(proxyScryfallCard);
+
+                }
+
+                return res
+                    .status(response.status)
+                    .json(data);
                         error:
                             "Missing search query."
 
